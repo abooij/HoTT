@@ -217,7 +217,7 @@ Qed.
 Global Instance slow_naturals_dec : DecidablePaths N.
 Proof.
 apply decidablepaths_equiv with nat (naturals_to_semiring nat N);apply _.
-Qed.
+Defined.
 
 Section with_a_ring.
   Context `{Ring R} `{!SemiRingPreserving (f : N -> R)} `{!Injective f}.

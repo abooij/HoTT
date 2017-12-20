@@ -294,7 +294,7 @@ induction a as [|a IHa].
   + destruct (IHa b).
     * left. apply le_S_S;trivial.
     * right. apply le_S_S. trivial.
-Qed.
+Defined.
 
 Lemma not_lt_0 : forall a, ~ a < 0.
 Proof.
@@ -458,7 +458,7 @@ Proof.
 intros a b. destruct (le_lt_dec a b).
 - left;trivial.
 - right. apply nat_lt_not_le. trivial.
-Qed.
+Defined.
 
 Lemma S_gt_0 : forall a, 0 < S a.
 Proof.

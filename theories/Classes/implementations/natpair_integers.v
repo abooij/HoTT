@@ -1034,7 +1034,7 @@ Lemma Z_abs' : IntAbs Z N.
 Proof.
 red. apply (Z_rect _ Z_abs_def).
 exact Z_abs_respects'.
-Qed.
+Defined.
 
 Global Instance Z_abs@{} : IntAbs@{UN UN UN UN UN
   UN UN UN UN UN
