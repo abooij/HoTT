@@ -132,25 +132,13 @@ Section join_semilattice_order.
   Section total_join.
   Context `{!TotalRelation le}.
 
-  Lemma total_join_either `{!TotalRelation le} x y : join x y = x \/ join x y = y.
+  Lemma total_join_either `{!TotalRelation le} x y : hor (join x y = x) (join x y = y).
   Proof.
-  destruct (total le x y) as [E|E].
-  - right. apply join_r,E.
-  - left. apply join_l,E.
+    refine (Trunc_rec _ (total le x y)). intros [E|E]; apply tr.
+    - right. apply join_r,E.
+    - left. apply join_l,E.
   Qed.
 
-  Definition max x y :=
-    match total le x y with
-    | inl _ => y
-    | inr _ => x
-    end.
-
-  Lemma total_join_max x y : join x y = max x y.
-  Proof.
-  unfold max;destruct (total le x y) as [E|E].
-  - apply join_r,E.
-  - apply join_l,E.
-  Qed.
   End total_join.
 
 End join_semilattice_order.
@@ -294,25 +282,13 @@ Section meet_semilattice_order.
   Section total_meet.
   Context `{!TotalRelation le}.
 
-  Lemma total_meet_either x y : meet x y = x \/ meet x y = y.
+  Lemma total_meet_either x y : hor (meet x y = x) (meet x y = y).
   Proof.
-  destruct (total le x y) as [E|E].
-  - left. apply meet_l,E.
-  - right. apply meet_r,E.
+    refine (Trunc_rec _ (total _ x y)). intros [E|E]; apply tr.
+    - left. apply meet_l,E.
+    - right. apply meet_r,E.
   Qed.
 
-  Definition min x y :=
-    match total le x y with
-    | inr _ => y
-    | inl _ => x
-    end.
-
-  Lemma total_meet_min x y : meet x y = min x y.
-  Proof.
-  unfold min. destruct (total le x y) as [E|E].
-  - apply meet_l,E.
-  - apply meet_r,E.
-  Qed.
   End total_meet.
 
 End meet_semilattice_order.
@@ -488,28 +464,32 @@ Section order_preserving_join_sl_mor.
 
   Lemma order_preserving_join_sl_mor: JoinPreserving f.
   Proof.
-  intros x y. case (total (≤) x y); intros E.
-  - change (f (join x y) = join (f x) (f y)).
-    rewrite (join_r _ _ E),join_r;trivial.
-    apply (order_preserving _). trivial.
-  - change (f (join x y) = join (f x) (f y)).
-    rewrite 2!join_l; trivial. apply (order_preserving _). trivial.
+    intros x y.
+    refine (Trunc_rec _ (total _ x y)).
+    intros [E|E].
+    - change (f (join x y) = join (f x) (f y)).
+      rewrite (join_r _ _ E),join_r;trivial.
+      apply (order_preserving _). trivial.
+    - change (f (join x y) = join (f x) (f y)).
+      rewrite 2!join_l; trivial. apply (order_preserving _). trivial.
   Qed.
 End order_preserving_join_sl_mor.
 
 Section order_preserving_meet_sl_mor.
   Context `{MeetSemiLatticeOrder L} `{MeetSemiLatticeOrder K}
-    `{!TotalOrder (_ : Le L)} `{!TotalOrder (_ : Le K)}
-    `{!OrderPreserving (f : L -> K)}.
+          `{!TotalOrder (_ : Le L)} `{!TotalOrder (_ : Le K)}
+          `{!OrderPreserving (f : L -> K)}.
 
   Lemma order_preserving_meet_sl_mor: SemiGroupPreserving f.
   Proof.
-  intros x y. case (total (≤) x y); intros E.
-  - change (f (meet x y) = meet (f x) (f y)).
-    rewrite 2!meet_l;trivial.
-    apply (order_preserving _). trivial.
-  - change (f (meet x y) = meet (f x) (f y)).
-    rewrite 2!meet_r; trivial.
-    apply (order_preserving _). trivial.
+    intros x y.
+    refine (Trunc_rec _ (total _ x y)).
+    intros [E|E].
+    - change (f (meet x y) = meet (f x) (f y)).
+      rewrite 2!meet_l;trivial.
+      apply (order_preserving _). trivial.
+    - change (f (meet x y) = meet (f x) (f y)).
+      rewrite 2!meet_r; trivial.
+      apply (order_preserving _). trivial.
   Qed.
 End order_preserving_meet_sl_mor.

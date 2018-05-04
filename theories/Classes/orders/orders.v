@@ -10,11 +10,11 @@ Proof.
 intros ?? E e;rewrite e in E. apply (irreflexivity _ _ E).
 Qed.
 
-Lemma le_flip `{Le A} `{!TotalRelation (≤)} x y : ~y ≤ x -> x ≤ y.
+Lemma le_flip `{Le A} `{!TotalRelation (≤)} `{is_mere_relation A (≤)} x y : ~y ≤ x -> x ≤ y.
 Proof.
-intros nle.
-destruct (total _ x y) as [?|le];auto.
-destruct (nle le).
+  intros nle.
+  refine (Trunc_rec _ (total _ x y)). intros [?|le];auto.
+  destruct (nle le).
 Qed.
 
 Section partial_order.
@@ -384,7 +384,7 @@ Section full_pseudo_order.
   Proof.
   split; try apply _.
   intros x y.
-  destruct (le_or_lt x y); auto.
+  destruct (le_or_lt x y); apply tr; auto.
   right. apply lt_le.
   trivial.
   Qed.
@@ -419,7 +419,50 @@ Hint Extern 10 (PropHolds (_ <> _)) => eapply @le_ne_flip : typeclass_instances.
 It will then loop like:
 
 semirings.lt_0_1 -> lt_ne_flip -> ...
-*)
+ *)
+
+Section trichotomy_decidable.
+  Context `{StrictOrder A} `{Trichotomy A (<)}.
+
+  Instance dec_paths_trichotomy : DecidablePaths A.
+  Proof.
+    intros a b. destruct (trichotomy _ a b) as [ltab|[eqab|ltba]].
+    - apply inr; intros p. rewrite p in ltab. exact (irreflexivity _ _ ltab).
+    - apply inl; assumption.
+    - apply inr; intros p. rewrite p in ltba. exact (irreflexivity _ _ ltba).
+  Defined.
+
+End trichotomy_decidable.
+
+Section trichotomy_hprop.
+  Context `{StrictOrder A} `{lt_mere : is_mere_relation A (<)} `{Funext}.
+
+  Existing Instance dec_paths_trichotomy.
+
+  SearchAbout IsHProp.
+
+  Instance hprop_trichotomy_pointed `{IsHSet A} : forall x y, IsHProp (x < y \/ (x = y \/ y < x)).
+  Proof.
+    intros x y. apply hprop_allpath. intros [sltxy|[seqxy|sltyx]] [tltxy|[teqxy|tltyx]].
+    - apply ap. apply lt_mere.
+    - assert (X : y < y). rewrite teqxy in sltxy; assumption. destruct (irreflexivity _ _ X).
+    - destruct (irreflexivity _ _ (transitivity sltxy tltyx)).
+    - assert (X : y < y). rewrite seqxy in tltxy; assumption. destruct (irreflexivity _ _ X).
+    - apply ap, ap. apply path_ishprop.
+    - assert (X : y < y). rewrite seqxy in tltyx; assumption. destruct (irreflexivity _ _ X).
+    - destruct (irreflexivity _ _ (transitivity sltyx tltxy)).
+    - assert (X : y < y). rewrite teqxy in sltyx; assumption. destruct (irreflexivity _ _ X).
+    - apply ap, ap. apply lt_mere.
+  Qed.
+
+  Instance hprop_trichotomy : IsHProp (Trichotomy (<)).
+  Proof.
+    apply hprop_allpath. intros f g.
+    apply path_forall; intros x; apply path_forall; intros y.
+    apply path_ishprop.
+  Qed.
+
+End trichotomy_hprop.
 
 Section dec_strict_setoid_order.
   Context `{StrictOrder A} `{Apart A} `{!TrivialApart A} `{DecidablePaths A}.
@@ -483,11 +526,14 @@ Section dec_partial_order.
 
   Context `{!TotalRelation (≤)}.
 
+  Existing Instance hprop_trichotomy_pointed.
+
   Instance: Trichotomy (<).
   Proof.
   intros x y.
   destruct (dec (x = y)); try auto.
-  destruct (total (≤) x y);[left|right;right];
+  refine (Trunc_rec _ (total (≤) x y)).
+  intros [?|?];[left|right;right];
   apply lt_correct;auto.
   split;auto.
   intro E;apply symmetry in E;auto.
@@ -503,7 +549,8 @@ Section dec_partial_order.
   - intros ? E. apply lt_correct in E;destruct E as [? []].
     apply (antisymmetry (≤));assumption.
   - intros E1.
-    destruct (total (≤) x y); trivial.
+    refine (Trunc_rec _ (total (≤) x y)).
+    intros [?|?]; trivial.
     destruct (dec (x = y)) as [E2|E2].
     + rewrite E2. apply reflexivity.
     + destruct E1. apply lt_correct;split;auto.

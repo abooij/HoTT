@@ -201,7 +201,8 @@ Global Instance Qpos_meet@{} : Meet Q+.
 Proof.
 intros a b. exists (meet (' a) (' b)).
 apply not_le_lt_flip. intros E.
-destruct (total_meet_either (' a) (' b)) as [E1|E1];
+refine (Trunc_rec _ (total_meet_either (' a) (' b))).
+intros [E1|E1];
 rewrite E1 in E;(eapply le_iff_not_lt_flip;[exact E|]);
 solve_propholds.
 Defined.
@@ -210,7 +211,8 @@ Global Instance Qpos_join@{} : Join Q+.
 Proof.
 intros a b. exists (join (' a) (' b)).
 apply not_le_lt_flip. intros E.
-destruct (total_join_either (' a) (' b)) as [E1|E1];
+refine (Trunc_rec _ (total_join_either (' a) (' b))).
+intros [E1|E1];
 rewrite E1 in E;(eapply le_iff_not_lt_flip;[exact E|]);
 solve_propholds.
 Defined.
@@ -218,8 +220,8 @@ Defined.
 Lemma Q_sum_eq_join_meet@{} : forall a b c d : Q, a + b = c + d ->
   a + b = join a c + meet b d.
 Proof.
-intros ???? E.
-destruct (total le a c) as [E1|E1].
+  intros ???? E.
+  refine (Trunc_rec _ (total le a c)). intros [E1|E1].
 - rewrite (join_r _ _ E1). rewrite meet_r;trivial.
   apply (order_preserving (+ b)) in E1.
   rewrite E in E1. apply (order_reflecting (c +)). trivial.
@@ -276,29 +278,30 @@ intros q r E. change (r = q + (r - q)).
 abstract ring_tac.ring_with_integers (NatPair.Z nat).
 Qed.
 
-
 Lemma Qmeet_plus_l : forall a b c : Q, meet (a + b) (a + c) = a + meet b c.
 Proof.
-intros. destruct (total le b c) as [E|E].
-- rewrite (meet_l _ _ E). apply meet_l.
-  apply (order_preserving (a +)),E.
-- rewrite (meet_r _ _ E). apply meet_r.
-  apply (order_preserving (a +)),E.
+  intros.
+  refine (Trunc_rec _ (total le b c)); intros [E|E].
+  - rewrite (meet_l _ _ E). apply meet_l.
+    apply (order_preserving (a +)),E.
+  - rewrite (meet_r _ _ E). apply meet_r.
+    apply (order_preserving (a +)),E.
 Qed.
 
-Lemma Qabs_nonneg@{} : forall q : Q, 0 <= abs q.
+Lemma Qabs_nonneg : forall q : Q, 0 <= abs q.
 Proof.
-intros q;destruct (total_abs_either q) as [E|E];destruct E as [E1 E2];rewrite E2.
-- trivial.
-- apply flip_nonneg_negate. rewrite involutive;trivial.
+  intros q.
+  refine (Trunc_rec _ (total_abs_either q)); intros [E|E];destruct E as [E1 E2]; rewrite E2.
+  - trivial.
+  - apply flip_nonneg_negate. rewrite involutive;trivial.
 Qed.
 
-Lemma Qabs_nonpos_0@{} : forall q : Q, abs q <= 0 -> q = 0.
+Lemma Qabs_nonpos_0 : forall q : Q, abs q <= 0 -> q = 0.
 Proof.
-intros q E. pose proof (antisymmetry le _ _ E (Qabs_nonneg _)) as E1.
-destruct (total_abs_either q) as [[E2 E3]|[E2 E3]];rewrite E3 in E1.
-- trivial.
-- apply (injective (-)). rewrite negate_0. trivial.
+  intros q E. pose proof (antisymmetry le _ _ E (Qabs_nonneg _)) as E1.
+  refine (Trunc_rec _ (total_abs_either q)); intros [[E2 E3]|[E2 E3]];rewrite E3 in E1.
+  - trivial.
+  - apply (injective (-)). rewrite negate_0. trivial.
 Qed.
 
 Lemma Qabs_0_or_pos : forall q : Q, q = 0 \/ 0 < abs q.
@@ -318,20 +321,22 @@ Proof.
 intro;apply ((abs_sig _).2).
 Qed.
 
-Lemma Qabs_le_raw@{} : forall x : Q, x <= abs x.
+Lemma Qabs_le_raw : forall x : Q, x <= abs x.
 Proof.
-intros x;destruct (total_abs_either x) as [[E1 E2]|[E1 E2]].
-- rewrite E2;reflexivity.
-- transitivity (0:Q);trivial.
-  rewrite E2. apply flip_nonpos_negate. trivial.
+  intros x.
+  refine (Trunc_rec _ (total_abs_either x)); intros [[E1 E2]|[E1 E2]].
+  - rewrite E2;reflexivity.
+  - transitivity (0:Q);trivial.
+    rewrite E2. apply flip_nonpos_negate. trivial.
 Qed.
 
-Lemma Qabs_neg@{} : forall x : Q, abs (- x) = abs x.
+Lemma Qabs_neg : forall x : Q, abs (- x) = abs x.
 Proof.
-intros x. destruct (total_abs_either x) as [[E1 E2]|[E1 E2]].
-- rewrite E2. path_via (- - x);[|rewrite involutive;trivial].
-  apply ((abs_sig (- x)).2). apply flip_nonneg_negate;trivial.
-- rewrite E2. apply ((abs_sig (- x)).2). apply flip_nonpos_negate;trivial.
+  intros x.
+  refine (Trunc_rec _ (total_abs_either x)); intros [[E1 E2]|[E1 E2]].
+  - rewrite E2. path_via (- - x);[|rewrite involutive;trivial].
+    apply ((abs_sig (- x)).2). apply flip_nonneg_negate;trivial.
+  - rewrite E2. apply ((abs_sig (- x)).2). apply flip_nonpos_negate;trivial.
 Qed.
 
 Lemma Qabs_le_neg_raw : forall x : Q, - x <= abs x.
@@ -339,7 +344,7 @@ Proof.
 intros x. rewrite <-Qabs_neg. apply Qabs_le_raw.
 Qed.
 
-Lemma Q_abs_le_pr@{} : forall x y : Q, abs x <= y <-> - y <= x /\ x <= y.
+Lemma Q_abs_le_pr : forall x y : Q, abs x <= y <-> - y <= x /\ x <= y.
 Proof.
 intros x y;split.
 - intros E. split.
@@ -348,27 +353,27 @@ intros x y;split.
   + transitivity (abs x);trivial.
     apply Qabs_le_raw.
 - intros [E1 E2].
-  destruct (total_abs_either x) as [[E3 E4]|[E3 E4]];rewrite E4.
+  refine (Trunc_rec _ (total_abs_either x)); intros [[E3 E4]|[E3 E4]];rewrite E4.
   + trivial.
   + apply flip_le_negate;rewrite involutive;trivial.
 Qed.
 
-Lemma Qabs_is_join@{} : forall q : Q, abs q = join (- q) q.
+Lemma Qabs_is_join : forall q : Q, abs q = join (- q) q.
 Proof.
-intros q. symmetry.
-destruct (total_abs_either q) as [[E1 E2]|[E1 E2]];rewrite E2.
-- apply join_r. transitivity (0:Q);trivial.
-  apply flip_nonneg_negate;trivial.
-- apply join_l. transitivity (0:Q);trivial.
-  apply flip_nonpos_negate;trivial.
+  intros q. symmetry.
+  refine (Trunc_rec _  (total_abs_either q)); intros [[E1 E2]|[E1 E2]];rewrite E2.
+  - apply join_r. transitivity (0:Q);trivial.
+    apply flip_nonneg_negate;trivial.
+  - apply join_l. transitivity (0:Q);trivial.
+    apply flip_nonpos_negate;trivial.
 Qed.
 
 Lemma Qlt_join : forall a b c : Q, a < c -> b < c ->
   join a b < c.
 Proof.
-intros a b c E1 E2.
-destruct (total le a b) as [E3|E3];rewrite ?(join_r _ _ E3),?(join_l _ _ E3);
-trivial.
+  intros a b c E1 E2.
+  refine (Trunc_rec _ (total le a b));intros [E3|E3];
+    rewrite ?(join_r _ _ E3),?(join_l _ _ E3);trivial.
 Qed.
 
 Lemma Q_average_between@{} : forall q r : Q, q < r -> q < (q + r) / 2 < r.
@@ -416,7 +421,8 @@ assert (Haux : forall a b : Q, a <= b -> forall e, a < ' e -> b < ' e ->
     unfold cast at 3;simpl.
     abstract ring_tac.ring_with_integers (NatPair.Z nat).
 }
-intros a b e E1 E2. destruct (total le a b) as [E|E];auto.
+intros a b e E1 E2.
+refine (Trunc_rec _ (total le a b)). intros [E|E];auto.
 destruct (Haux _ _ E e) as [d [d' [E3 [E4 E5]]]];trivial.
 eauto.
 Qed.

@@ -219,8 +219,9 @@ Lemma projected_total_order `{Ale : Le A} `{Ble : Le B}
   (f : A -> B) `{!TotalRelation Ble}
   : (forall x y, x ≤ y <-> f x ≤ f y) -> TotalRelation Ale.
 Proof.
-intros P x y.
-destruct (total (≤) (f x) (f y)); [left | right]; apply P;trivial.
+  intros P x y.
+  refine (Trunc_functor _ _ (total (≤) (f x) (f y))).
+  intros [?|?]; [left | right]; apply P;trivial.
 Qed.
 
 Lemma projected_strict_order `{Alt : Lt A} `{is_mere_relation A lt} `{Blt : Lt B}
@@ -309,4 +310,3 @@ Hint Extern 4 (OrderReflecting (_ ∘ _)) =>
   class_apply @compose_order_reflecting : typeclass_instances.
 Hint Extern 4 (OrderEmbedding (_ ∘ _)) =>
   class_apply @compose_order_embedding : typeclass_instances.
-

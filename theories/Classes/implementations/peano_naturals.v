@@ -314,8 +314,8 @@ Qed.
 
 Local Instance nat_le_total : TotalRelation@{N N} (_:Le nat).
 Proof.
-hnf. intros a b.
-destruct (le_lt_dec a b);[left|right].
+  hnf. intros a b.
+destruct (le_lt_dec a b);apply tr;[left|right].
 - trivial.
 - apply lt_le;trivial.
 Qed.

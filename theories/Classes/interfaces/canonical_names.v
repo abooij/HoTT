@@ -242,7 +242,7 @@ Class Associative {A} (f : A -> A -> A)
 
 Class Involutive {A} (f : A -> A) := involutive: forall x, f (f x) = x.
 
-Class TotalRelation `(R : relation A) : Type := total : forall x y : A, R x y \/ R y x.
+Class TotalRelation `(R : relation A) : Type := total : forall x y : A, hor (R x y) (R y x).
 Arguments total {A} _ {TotalRelation} _ _.
 
 Class Trichotomy `(R : relation A)
