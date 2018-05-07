@@ -8,7 +8,7 @@ Require Import
   - i universe of origin type
   - j universe of target types
   - k universe of applied apart of target types
-  - l universe of Field property of target types 
+  - l universe of Field property of target types
 *)
 Class RationalsToField@{i j k l} (A : Type@{i}) :=
   rationals_to_field : forall (B : Type@{j}) `{Field@{j l k} B}
@@ -20,7 +20,7 @@ Arguments rationals_to_field A {_} B {_ _ _ _ _ _ _ _ _} _.
 (* The Rationals are the initial field of characteristic 0. *)
 
 Class Rationals A {Aap : Apart A} {Aplus Amult Azero Aone Aneg Arecip Ale Alt}
-  `{U : !RationalsToField A} :=
+  `{RF : !RationalsToField A} :=
   { rationals_field :> @DecField A Aplus Amult Azero Aone Aneg Arecip
   ; rationals_order :> FullPseudoSemiRingOrder Ale Alt
   ; rationals_to_field_mor :> forall `{Field B} `{!FieldCharacteristic B 0},

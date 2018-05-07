@@ -444,6 +444,19 @@ Section dec_strict_setoid_order.
   Qed.
 End dec_strict_setoid_order.
 
+Section trichotomy_decidable.
+  Context `{StrictOrder A} `{Trichotomy A (<)}.
+
+  Instance dec_paths_trichotomy : DecidablePaths A.
+  Proof.
+    intros a b. destruct (trichotomy _ a b) as [ltab|[eqab|ltba]].
+    - apply inr; intros p. rewrite p in ltab. exact (irreflexivity _ _ ltab).
+    - apply inl; assumption.
+    - apply inr; intros p. rewrite p in ltba. exact (irreflexivity _ _ ltba).
+  Defined.
+
+End trichotomy_decidable.
+
 Section dec_partial_order.
   Context `{PartialOrder A} `{DecidablePaths A}.
 

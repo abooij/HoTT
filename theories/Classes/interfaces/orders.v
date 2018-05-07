@@ -178,3 +178,6 @@ Class FullPseudoRingOrder `{Apart A} `{Plus A}
   ; pseudo_ringorder_plus :> forall z, StrictlyOrderPreserving (z +)
   ; pseudo_ringorder_mult : forall x y, 0 < x -> 0 < y -> 0 < x * y }.
 *)
+
+(* Next, a constructive definition of fields - the ordered fields from
+HoTT book chapter 11. *)
