@@ -181,3 +181,10 @@ Class FullPseudoRingOrder `{Apart A} `{Plus A}
 
 (* Next, a constructive definition of fields - the ordered fields from
 HoTT book chapter 11. *)
+
+Class OrderedField (A : Type)`{Lt A} `{Le A} `{Apart A} `{Zero A} `{One A} `{Plus A}
+      `{Negate A} `{Mult A} `{Recip A} `{Join A} `{Meet A} :=
+  { ordered_field_field :> Field A
+  ; ordered_field_lattice :> LatticeOrder (≤)
+  ; ordered_field_fssro :> FullPseudoSemiRingOrder (≤) (<)
+  }.

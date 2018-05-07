@@ -143,9 +143,6 @@ Section dedekind.
 
     Global Instance rdminus : Negate RD := minus.
 
-
-
-
     Global Instance rdplusinvl : LeftInverse rdplus rdminus rd0.
     Proof. Admitted.
 
@@ -253,13 +250,13 @@ Section dedekind.
     Definition rdapartdisj (x y : RD) : x ≶ y <-> (x < y) \/ (y < x).
     Proof. Admitted.
 
-    Definition le (x y : RD) : hProp.
+    Definition rd_le (x y : RD) : hProp.
     Proof.
       destruct x as [[L U] iscut_x]; destruct y as [[K V] iscut_y].
       exact (BuildhProp (forall q, L q -> K q)).
     Defined.
 
-    Global Instance rdle : Le RD := le.
+    Global Instance rdle : Le RD := rd_le.
 
     Definition rdlelt (x y : RD) : x ≤ y <-> ~ y < x.
     Proof. Admitted.
@@ -298,6 +295,7 @@ Section dedekind.
 
     Global Instance rdrecip : Recip RD.
     Proof.
+      unfold Recip.
       intros [x nonzero].
       destruct (x) as [[L U] x_iscut].
       exists ( fun q => hexists
@@ -306,6 +304,9 @@ Section dedekind.
                   (fun q' => L q' /\ ((0 < q' /\ 1 < (q'*r)%mc) \/ (q' < 0 /\ (q'*r)%mc < 1)))
         ).
     Admitted.
+
+    Definition rdrecipinvr : forall x : {y : RD | y ≶ 0}, x.1 // x = 1.
+    Proof. Admitted.
 
     Definition neq01 : 0 ≶ 1.
     Proof.
@@ -322,8 +323,51 @@ Section dedekind.
     Proof.
       repeat split; try exact _; try apply rdfssro.
       - exact neq01.
-      - intros [x nonzero].
+      - apply rdrecipinvr.
+    Qed.
 
   End field.
+
+  Section ordered_field.
+
+    Global Instance rdmax : Join RD.
+    Proof.
+      intros x y.
+      destruct (x) as [[L U] x_iscut]; destruct (y) as [[K V] y_iscut].
+      exists ( fun q => hor (L q) (K q)
+        , fun r => BuildhProp ((U r) /\ (V r))
+        ).
+    Admitted.
+
+    Global Instance rdmin : Meet RD.
+    Proof.
+      intros x y.
+      destruct (x) as [[L U] x_iscut]; destruct (y) as [[K V] y_iscut].
+      exists ( fun q => BuildhProp ((L q) /\ (K q))
+        , fun r => hor (U r) (V r)
+        ).
+    Admitted.
+
+    Definition rdlt_po : PartialOrder(≤) := (@fullpseudo_partial RD _ _ _ _).
+
+    Global Instance rd_ordered_field : OrderedField RD.
+    Proof.
+      (* assert ((≤) = complement (<)). *)
+      (* { *)
+      (*   apply path_forall2. intros x y. unfold complement. *)
+      (*   SearchAbout AntiSymmetric. *)
+      (*   nlt_antisymm *)
+      (* } *)
+      repeat split; try apply rdfield; try apply rdfssro; try apply rdlt_po.
+      - symmetry; apply neq01.
+      - admit.
+      - admit.
+      - admit.
+      - admit.
+      - admit.
+      - admit.
+    Admitted.
+
+  End ordered_field.
 
 End dedekind.
