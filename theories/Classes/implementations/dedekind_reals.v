@@ -114,7 +114,6 @@ Section dedekind.
     Admitted.
 
     Global Instance rdplus : Plus RD := plus.
-    Eval compute in (rd0 + rd1).
 
     Global Instance rdplusassoc : Associative plus.
     Proof. Admitted.
