@@ -13,6 +13,7 @@ Require Import
         HoTT.Classes.interfaces.abstract_algebra
         HoTT.Classes.interfaces.rationals
         HoTT.Classes.interfaces.orders
+        HoTT.Classes.interfaces.archimedean
         HoTT.Classes.theory.rings
         HoTT.Classes.orders.semirings
         HoTT.Classes.theory.apartness
@@ -22,12 +23,22 @@ Require Import
 
 Section dedekind.
   Universe UU.
+  Check rational_1_neq_0.
+  Check (_ : TrivialApart _).
   Context `{Funext} `{Univalence}.
-  Context (Q : Type@{UU}) `{Rationals@{UU UU UU UU UU UU UU UU UU UU} Q}.
+  Context (Q : Type@{UU})
+          {Qap : Apart Q} {Qplus Qmult Qzero Qone Qneg Qrecip Qle Qlt}
+          `{@DecField Q Qplus Qmult Qzero Qone Qneg Qrecip}
+          `{@FullPseudoSemiRingOrder Q Qap Qplus Qmult Qzero Qone Qle Qlt}
+  .
+          (* `{Rationals@{UU UU UU UU UU UU UU UU UU UU} Q}. *)
   Context {Qtrivialapart : TrivialApart Q} {Qdec : DecidablePaths Q}.
   Context `{Trichotomy Q (<)}.
-  (* TODO: Remove the following requirement as soon as the rationals are adequately developed. *)
-  Context `{Meet Q} `{Join Q}.
+  Context `{PropHolds (1 ≶ (@id Q 0))}.
+  Context `{LatticeOrder Q}.
+
+  (* Adding a global evil axiom so that more things reduce easily. *)
+  Axiom axiomatize : Empty.
 
   Section axioms.
 
@@ -37,7 +48,7 @@ Section dedekind.
     (* Notation "q < x" := (fst (@id precut x) q) : mc_scope. *)
     (* Notation "x < r" := (snd (@id precut x) r) : mc_scope. *)
 
-    Class IsCut (L U : Q -> hProp) :=
+    Class IsCut (L U : Q -> hProp@{UU}) :=
       BuildIsCut
         { bounded_l :> hexists (fun q => L q)
           ; bounded_u :> hexists (fun r => U r)
@@ -46,7 +57,7 @@ Section dedekind.
           ; transitive :> forall q r, L q /\ U r -> q < r
           ; located :> forall q r, q < r -> hor (L q) (U r)}.
 
-    Lemma issig_iscut (L U : Q -> hProp)
+    Lemma issig_iscut (L U : Q -> hProp@{UU})
       : { _ : hexists (fun q => L q) |
           { _ : hexists (fun r => U r) |
             { _ : forall q, L q <-> hexists (fun q' => q < q' /\ L q') |
@@ -64,12 +75,12 @@ Section dedekind.
             (@located L U).
     Defined.
 
-    Instance ishprop_IsCut (L U : Q -> hProp) : IsHProp (IsCut L U).
+    Instance ishprop_IsCut (L U : Q -> hProp@{UU}) : IsHProp (IsCut L U).
     Proof.
-      apply (trunc_equiv' _ (issig_iscut L U)).
+      refine (trunc_equiv' _ (issig_iscut L U)).
     Qed.
 
-    Definition RD : Type := { x : (Q -> hProp) /\ (Q -> hProp) | IsCut (fst x) (snd x) }.
+    Definition RD : Type := { x : (Q -> hProp@{UU}) /\ (Q -> hProp@{UU}) | IsCut (fst x) (snd x) }.
 
     Instance ishset_RD : IsHSet RD.
     Proof.
@@ -110,29 +121,29 @@ Section dedekind.
     Proof.
       destruct x as [[L U] iscut_x]; destruct y as [[K V] iscut_y].
       exists (fun q => hexists (fun s => L s /\ K (q - s)), fun r => hexists (fun t => U t /\ V (r - t))).
-      admit.
-    Admitted.
+      destruct axiomatize.
+    Defined.
 
     Global Instance rdplus : Plus RD := plus.
 
-    Global Instance rdplusassoc : Associative plus.
+    Local Instance rdplusassoc : Associative plus.
     Proof. Admitted.
 
-    Global Instance rdpluscomm : Commutative plus.
+    Local Instance rdpluscomm : Commutative plus.
     Proof. Admitted.
 
-    Global Instance rdplusidl : LeftIdentity rdplus rd0.
+    Local Instance rdplusidl : LeftIdentity rdplus rd0.
     Proof. Admitted.
 
-    Global Instance rdplusidr : RightIdentity rdplus rd0.
+    Local Instance rdplusidr : RightIdentity rdplus rd0.
     Proof. Admitted.
 
     Definition minus (x : RD) : RD.
     Proof.
       destruct x as [[L U] iscut_x].
       exists (fun q => U (- q), fun r => L (- r)).
-      admit.
-    Admitted.
+      destruct axiomatize.
+    Defined.
     Local Instance plus_assoc : Associative plus.
     Proof.
     Admitted.
@@ -142,7 +153,7 @@ Section dedekind.
 
     Global Instance rdminus : Negate RD := minus.
 
-    Global Instance rdplusinvl : LeftInverse rdplus rdminus rd0.
+    Local Instance rdplusinvl : LeftInverse rdplus rdminus rd0.
     Proof. Admitted.
 
     Global Instance rdplusinvr : RightInverse rdplus rdminus rd0.
@@ -165,24 +176,24 @@ Section dedekind.
                        L a /\ U b /\ K c /\ V d /\ ((a*c) ⊔ (a*d) ⊔ (b * c) ⊔ (b * d)) < r
                      end)
         ).
-      admit.
-    Admitted.
+      destruct axiomatize.
+    Defined.
 
     Global Instance rdtimes : Mult RD := times.
 
-    Global Instance rdtimesassoc : Associative times.
+    Local Instance rdtimesassoc : Associative times.
     Proof. Admitted.
 
-    Global Instance rdtimescomm : Commutative times.
+    Local Instance rdtimescomm : Commutative times.
     Proof. Admitted.
 
-    Global Instance rdtimesidl : LeftIdentity rdtimes rd1.
+    Local Instance rdtimesidl : LeftIdentity rdtimes rd1.
     Proof. Admitted.
 
-    Global Instance rdtimesidr : RightIdentity rdtimes rd1.
+    Local Instance rdtimesidr : RightIdentity rdtimes rd1.
     Proof. Admitted.
 
-    Global Instance rdplustimesdistr : LeftDistribute rdtimes rdplus.
+    Local Instance rdplustimesdistr : LeftDistribute rdtimes rdplus.
     Proof. Admitted.
 
     Existing Instance ishset_RD.
@@ -190,7 +201,10 @@ Section dedekind.
     Global Instance rdring : Ring RD.
     Proof.
       repeat split; try exact _.
-    Qed.
+    Defined.
+
+    Global Instance inc_mor : SemiRingPreserving inc.
+    Proof. Admitted.
 
   End ring.
 
@@ -260,6 +274,8 @@ Section dedekind.
     Definition rdlelt (x y : RD) : x ≤ y <-> ~ y < x.
     Proof. Admitted.
 
+    Existing Instance rdring.
+
     Definition rdleminus (x y : RD) : ~ y < x -> {z : RD | y = x + z}.
     Proof. Admitted.
 
@@ -280,13 +296,13 @@ Section dedekind.
       - apply rdapartdisj.
       - apply rdapartdisj.
       - apply rdleminus.
-      - admit.
-      - admit.
-      - admit.
-      - admit.
+      - destruct axiomatize.
+      - destruct axiomatize.
+      - destruct axiomatize.
+      - destruct axiomatize.
       - apply rdlelt.
       - apply rdlelt.
-    Admitted.
+    Defined.
 
   End order.
 
@@ -307,23 +323,24 @@ Section dedekind.
     Definition rdrecipinvr : forall x : {y : RD | y ≶ 0}, x.1 // x = 1.
     Proof. Admitted.
 
-    Definition neq01 : 0 ≶ 1.
+    Definition neq01 : (@id RD 0) ≶ 1.
     Proof.
       assert (0 < 1).
       {
         apply tr; exists ((0+1)/2); simpl.
-        refine (@Q_average_between _ _ Q _ _ _ _ _ _ _ _ _ _ _ _ _ 0 1 _).
-        apply lt_0_1.
+        admit.
+        (* refine (@Q_average_between _ _ Q _ _ _ _ _ _ _ _ _ _ _ _ _ 0 1 _). *)
+        (* apply (@lt_0_1 Q Qap Qplus Qmult Qzero Qone Qlt _ _ _). *)
       }
       apply inl; assumption.
-    Qed.
+    Admitted.
 
     Global Instance rdfield : Field RD.
     Proof.
       repeat split; try exact _; try apply rdfssro.
       - exact neq01.
       - apply rdrecipinvr.
-    Qed.
+    Defined.
 
   End field.
 
@@ -359,14 +376,37 @@ Section dedekind.
       (* } *)
       repeat split; try apply rdfield; try apply rdfssro; try apply rdlt_po.
       - symmetry; apply neq01.
-      - admit.
-      - admit.
-      - admit.
-      - admit.
-      - admit.
-      - admit.
-    Admitted.
+      - destruct axiomatize.
+      - destruct axiomatize.
+      - destruct axiomatize.
+      - destruct axiomatize.
+      - destruct axiomatize.
+      - destruct axiomatize.
+    Defined.
 
   End ordered_field.
+
+  Section archimedean.
+
+    Context `{RationalsToField Q}.
+    Context `{rationals_initial
+              : forall `{Field B} `{!FieldCharacteristic B 0}
+                  {h : Q -> B} `{!SemiRingPreserving h} x,
+                 rationals_to_field Q B x = h x}.
+
+    Definition inc_to_field : @rationals_to_field Q _ RD _ _ _ _ _ _ _ ordered_field_field _ == inc.
+    Proof.
+      intros q. refine (rationals_initial _ _ _ _ _ _ _ _ _ _ inc _ q).
+    Qed.
+
+    Global Instance rd_archimedean : @ArchimedeanField Q _ RD _ _ rd1 _ _ _ _ _ _ _ _.
+    Proof.
+      refine (Build_ArchimedeanField _ _ _ _).
+      intros x y ltxy. strip_truncations; apply tr. destruct ltxy as [s [xUs yLs]].
+      exists s.
+      destruct axiomatize.
+    Defined.
+
+  End archimedean.
 
 End dedekind.

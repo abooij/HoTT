@@ -394,6 +394,7 @@ theories/Classes/orders/nat_int.v
 theories/Classes/orders/integers.v
 theories/Classes/implementations/assume_rationals.v
 theories/Classes/implementations/peano_naturals.v
+theories/Classes/implementations/dedekind_reals.v
 theories/Classes/implementations/binary_naturals.v
 theories/Classes/implementations/natpair_integers.v
 theories/Classes/implementations/field_of_fractions.v
@@ -407,6 +408,7 @@ theories/Classes/interfaces/naturals.v
 theories/Classes/interfaces/rationals.v
 theories/Classes/interfaces/canonical_names.v
 theories/Classes/interfaces/orders.v
+theories/Classes/interfaces/archimedean.v
 theories/Classes/interfaces/integers.v
 theories/Classes/tests/ring_tac.v
 
