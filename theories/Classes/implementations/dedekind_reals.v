@@ -337,7 +337,8 @@ Section dedekind.
 
     Global Instance rdfield : Field RD.
     Proof.
-      repeat split; try exact _; try apply rdfssro.
+      split; try apply rdring; try apply rdfssro.
+      - exact _.
       - exact neq01.
       - apply rdrecipinvr.
     Defined.
@@ -374,8 +375,8 @@ Section dedekind.
       (*   SearchAbout AntiSymmetric. *)
       (*   nlt_antisymm *)
       (* } *)
-      repeat split; try apply rdfield; try apply rdfssro; try apply rdlt_po.
-      - symmetry; apply neq01.
+      split; try apply rdfield; try apply rdfssro.
+      repeat split; try exact _.
       - destruct axiomatize.
       - destruct axiomatize.
       - destruct axiomatize.
@@ -394,7 +395,7 @@ Section dedekind.
                   {h : Q -> B} `{!SemiRingPreserving h} x,
                  rationals_to_field Q B x = h x}.
 
-    Definition inc_to_field : @rationals_to_field Q _ RD _ _ _ _ _ _ _ ordered_field_field _ == inc.
+    Definition inc_to_field : rationals_to_field Q RD == inc.
     Proof.
       intros q. refine (rationals_initial _ _ _ _ _ _ _ _ _ _ inc _ q).
     Qed.
@@ -404,7 +405,7 @@ Section dedekind.
       refine (Build_ArchimedeanField _ _ _ _).
       intros x y ltxy. strip_truncations; apply tr. destruct ltxy as [s [xUs yLs]].
       exists s.
-      destruct axiomatize.
+      rewrite (inc_to_field s).
     Defined.
 
   End archimedean.
