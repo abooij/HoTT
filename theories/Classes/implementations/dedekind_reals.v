@@ -328,12 +328,11 @@ Section dedekind.
       assert (0 < 1).
       {
         apply tr; exists ((0+1)/2); simpl.
-        admit.
-        (* refine (@Q_average_between _ _ Q _ _ _ _ _ _ _ _ _ _ _ _ _ 0 1 _). *)
-        (* apply (@lt_0_1 Q Qap Qplus Qmult Qzero Qone Qlt _ _ _). *)
+        refine (@Q_average_between _ _ Q _ _ _ _ _ _ _ _ _ _ _ _ _ 0 1 _).
+        apply (@lt_0_1 Q Qap Qplus Qmult Qzero Qone Qlt _ _ _).
       }
       apply inl; assumption.
-    Admitted.
+    Qed.
 
     Global Instance rdfield : Field RD.
     Proof.
@@ -400,12 +399,13 @@ Section dedekind.
       intros q. refine (rationals_initial _ _ _ _ _ _ _ _ _ _ inc _ q).
     Qed.
 
-    Global Instance rd_archimedean : @ArchimedeanField Q _ RD _ _ rd1 _ _ _ _ _ _ _ _.
+    Global Instance rd_archimedean : ArchimedeanField Q RD.
     Proof.
       refine (Build_ArchimedeanField _ _ _ _).
       intros x y ltxy. strip_truncations; apply tr. destruct ltxy as [s [xUs yLs]].
       exists s.
       rewrite (inc_to_field s).
+      destruct axiomatize.
     Defined.
 
   End archimedean.
