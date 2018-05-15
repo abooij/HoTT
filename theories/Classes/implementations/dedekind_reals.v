@@ -82,6 +82,9 @@ Section dedekind.
 
     Definition RD : Type := { x : (Q -> hProp@{UU}) /\ (Q -> hProp@{UU}) | IsCut (fst x) (snd x) }.
 
+    Definition L (x : RD) (q : Q) := fst x.1 q.
+    Definition U (x : RD) (q : Q) := snd x.1 q.
+
     Instance ishset_RD : IsHSet RD.
     Proof.
       exact _.

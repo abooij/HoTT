@@ -246,6 +246,20 @@ Proof.
   destruct x; exact _.
 Defined.
 
+Definition is_inl_not_inr {A B} (x : A + B)  (na : ~ A)
+: is_inr x
+  := match x with
+     | inl a => na a
+     | inr b => tt
+     end.
+
+Definition is_inr_not_inl {A B} (x : A + B)  (nb : ~ B)
+: is_inl x
+  := match x with
+     | inl a => tt
+     | inr b => nb b
+     end.
+
 Definition un_inl {A B} (z : A + B)
 : is_inl z -> A.
 Proof.
