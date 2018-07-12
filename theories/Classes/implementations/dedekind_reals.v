@@ -93,6 +93,22 @@ Section dedekind.
 
   End axioms.
 
+  Section basics.
+
+    Definition cut_disjoint (x : RD) (q : Q) : L x q -> not (U x q).
+    Proof.
+      intros lq uq.
+      assert (q < q) as X.
+      {
+        refine (transitive q q _).
+        - apply x.
+        - exact (lq, uq).
+      }
+      apply (irreflexivity _ _ X).
+    Qed.
+
+  End basics.
+
   Section ring.
 
     Axiom ltneg1 : forall s, s - 1 < s.

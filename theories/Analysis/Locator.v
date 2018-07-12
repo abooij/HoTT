@@ -1,12 +1,15 @@
 Require Import
         HoTT.Basics
+        HoTT.BoundedSearch
         HoTT.Types.Universe
         HoTT.Types.Sum
         HoTT.Spaces.Finite.
 
 Require Import
         HoTT.Classes.interfaces.abstract_algebra
+        HoTT.Classes.interfaces.integers
         HoTT.Classes.implementations.assume_rationals
+        HoTT.Classes.implementations.natpair_integers
         HoTT.Classes.implementations.dedekind_reals.
 
 Require Import
@@ -15,9 +18,11 @@ Require Import
 
 Module locator.
 
+  (* Definition of a locator for a fixed real number. *)
   Definition locator (x : R) := forall q r : Q, q < r -> (L Q x q) + (U Q x r).
 
   Section gives.
+    (* Basic theory of coproduct types. *)
     Context {A B : Type}.
 
     Definition gives_lower (z : A + B) : Type := (is_inl z).
@@ -25,8 +30,14 @@ Module locator.
 
     Check (fun z => BuildhProp (gives_lower z)).
     Check (fun z => BuildhProp (gives_upper z)).
-    Check (fun z => dec (gives_lower z)).
-    Check (fun z => dec (gives_upper z)).
+    Global Instance gives_lower_dec {z} : Decidable (gives_lower z).
+    Proof.
+      destruct z; cbn; apply _.
+    Defined.
+    Global Instance gives_upper_dec {z} : Decidable (gives_upper z).
+    Proof.
+      destruct z; cbn; apply _.
+    Defined.
 
     Definition gives_not_lower : forall (z : A + B) (na : ~ A), gives_upper z
       := is_inl_not_inr.
@@ -39,7 +50,7 @@ Module locator.
   End gives.
 
   Section rational.
-
+    (* Rationals have locators: two constructions. *)
     Context (s : Q).
 
     Definition locator_first : locator (' s).
@@ -92,7 +103,7 @@ Module locator.
   End approx.
 
   Section ops.
-
+    (* If x and y are equipped with locators, then so are -x, x+y, etc. *)
     Context
       (x y : R)
       (f : locator x)
@@ -107,15 +118,10 @@ Module locator.
     Defined.
 
     Axiom plus : locator (x + y).
-    (* Proof. *)
-    (*   intros q r ltqr. cbn. *)
 
     Axiom times : locator (x * y).
 
     Context `{Univalence}.
-
-    (* Definition divide (ineq : x ≶ 0) : locator (rdrecip Q (x; ineq)). *)
-    (* Proof. Admitted. *)
 
     (* if x is apart from zero, then x^-1 has a locator *)
     Axiom divide : forall ineq, locator (rdrecip Q (x; ineq)).
@@ -127,6 +133,8 @@ Module locator.
   End ops.
 
   Section cauchy.
+    (* Given a sequence of reals, all equipped with locators, and a
+    Cauchy modulus, then we construct a locator for the limit.  *)
     Context `{Univalence}.
 
     Context (xs : nat -> R)
@@ -136,5 +144,61 @@ Module locator.
     Axiom limits : locator (limit).
 
   End cauchy.
+
+  Section lower_bounds.
+    (* Given a real with a locator, we can find (integer) bounds. *)
+    Context `{Univalence}.
+    Context (x : R)
+            (f : locator x).
+
+    Let int := NatPair.Z nat.
+    Definition cast_int_rat : Cast int Q := integers_to_ring int Q.
+    Existing Instance cast_int_rat.
+
+    Axiom ltkSk : forall k, cast_int_rat k < cast_int_rat (k+1).
+    Let P (k : int) : Type := gives_lower (f ('k) ('(k+1)) (ltkSk k)).
+    Definition P_prop {k} : IsHProp (P k).
+    Proof.
+      apply _.
+    Qed.
+    Axiom rat_floor : Q -> int.
+    Axiom rat_floor_prop : forall q, ' (rat_floor q) <= q.
+    Definition P_inhab : hexists (fun k => P k).
+    Proof.
+      assert (hqlt : hexists (fun q => L Q x q)).
+      {
+        unfold R, RD in *. refine (@bounded_l Q _ (L Q x) (U Q x) _).
+        apply x.
+      }
+      strip_truncations.
+      induction hqlt as [q lt].
+      apply tr.
+      set (k := (rat_floor q) - 1).
+      exists k.
+      assert (X : L Q x ('(k + 1))).
+      {
+        refine (snd (@rounded_l Q _ (L Q x) (U Q x) _ (' (k + 1))) _).
+        - apply x.
+        - apply tr; exists q; split.
+          + unfold k. admit.
+          + assumption.
+      }
+      assert (Y : not (U Q x ('(k+1)))) by refine (cut_disjoint Q _ _ X).
+      apply gives_not_upper; assumption.
+    Admitted.
+
+    Axiom equiv_int_nat : int <~> nat.
+
+    Definition lower_bound : {k : int | L Q x (' k)}.
+    Proof.
+      assert (path_int_nat : int = nat) by apply (path_universe equiv_int_nat).
+      set (search := minimal_n).
+      rewrite <- path_int_nat in search.
+      destruct (search P _ _ P_inhab) as [k Pk].
+      exists k.
+      apply (take_lower _ Pk).
+    Defined.
+
+  End lower_bounds.
 
 End locator.
