@@ -1,15 +1,21 @@
 Require Import
-        HoTT.Types.Sum.
+        HoTT.Basics
+        HoTT.Types.Universe
+        HoTT.Types.Sum
+        HoTT.Spaces.Finite.
 
 Require Import
         HoTT.Classes.interfaces.abstract_algebra
         HoTT.Classes.implementations.assume_rationals
         HoTT.Classes.implementations.dedekind_reals.
 
+Require Import
+        HoTT.Analysis.Cauchy
+        HoTT.Analysis.Reals.
+
 Module locator.
 
-  (* todo automatically use Q *)
-  Definition locator (x : RD Q) := forall q r : Q, q < r -> (L Q x q) + (U Q x r).
+  Definition locator (x : R) := forall q r : Q, q < r -> (L Q x q) + (U Q x r).
 
   Section gives.
     Context {A B : Type}.
@@ -36,7 +42,7 @@ Module locator.
 
     Context (s : Q).
 
-    Definition locator_first : locator (inc Q s).
+    Definition locator_first : locator (' s).
     Proof.
       intros q r ltqr.
       destruct (trichotomy _ q s) as [ltqs|[eqqs|ltsq]].
@@ -45,7 +51,7 @@ Module locator.
       - apply inr. simpl. transitivity q; assumption.
     Defined.
 
-    Definition locator_second : locator (inc Q s).
+    Definition locator_second : locator (' s).
     Proof.
       intros q r ltqr.
       destruct (trichotomy _ s r) as [ltsr|[eqsr|ltrs]].
@@ -56,10 +62,39 @@ Module locator.
 
   End rational.
 
+  Section approx.
+
+    (* For any real number x, and any positive rational epsilon, there
+    exists a rational q with q<x<q+epsilon *)
+
+    Context (x : R)
+            (epsilon : Q+).
+
+    (* Axiom rat_arch_n : forall q r : Q, {n : nat | r < q + (' (' n)) * ' epsilon }. *)
+
+    (* Section bounded. *)
+    (*   Context (q r : Q) *)
+    (*           (qltx : incR q < x) *)
+    (*           (xltr : x < incR r). *)
+
+    (*   Let n : nat := pr1 (rat_arch_n q r). *)
+
+    (*   (* axiom: cast finite to natural *) *)
+
+    (*   Let bla : forall k : Fin n, *)
+
+    (* Axiom fin : forall k : Fin n, nat. *)
+
+    (* Let generate_n (q r : Q) : (incR q < x) -> (x < incR r) -> . *)
+
+    Axiom rational_epsilon_bound : hexists (fun q => ' q < x < ' (q + ' epsilon)).
+
+  End approx.
+
   Section ops.
 
     Context
-      (x y : RD Q)
+      (x y : R)
       (f : locator x)
       (g : locator y).
 
@@ -71,6 +106,35 @@ Module locator.
       - exact (inl ltxnq).
     Defined.
 
+    Axiom plus : locator (x + y).
+    (* Proof. *)
+    (*   intros q r ltqr. cbn. *)
+
+    Axiom times : locator (x * y).
+
+    Context `{Univalence}.
+
+    (* Definition divide (ineq : x ≶ 0) : locator (rdrecip Q (x; ineq)). *)
+    (* Proof. Admitted. *)
+
+    (* if x is apart from zero, then x^-1 has a locator *)
+    Axiom divide : forall ineq, locator (rdrecip Q (x; ineq)).
+
+    Axiom min : locator (x ⊓ y).
+
+    Axiom max : locator (x ⊔ y).
+
   End ops.
+
+  Section cauchy.
+    Context `{Univalence}.
+
+    Context (xs : nat -> R)
+            {xs_cauchy : cauchy_modulus xs}
+            (xs_locators : forall n, locator (xs n)).
+
+    Axiom limits : locator (limit).
+
+  End cauchy.
 
 End locator.

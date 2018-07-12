@@ -22,10 +22,11 @@ Require Import
         HoTT.Classes.tactics.ring_tac.
 
 Section dedekind.
-  Universe UU.
-  Check rational_1_neq_0.
-  Check (_ : TrivialApart _).
+  (* Universe UU. *)
+  (* Check rational_1_neq_0. *)
+  (* Check (_ : TrivialApart _). *)
   Context `{Funext} `{Univalence}.
+
   Context (Q : Type@{UU})
           {Qap : Apart Q} {Qplus Qmult Qzero Qone Qneg Qrecip Qle Qlt}
           `{@DecField Q Qplus Qmult Qzero Qone Qneg Qrecip}
@@ -412,5 +413,14 @@ Section dedekind.
     Defined.
 
   End archimedean.
+
+  Section absolute.
+
+    Let abs_map (x : RD) : RD := x ⊔ -x.
+    Axiom abs_prop : forall x, ((0 ≤ x -> (abs_map x) = x) * (x ≤ 0 -> (abs_map x) = - x)).
+
+    Global Instance rd_abs : Abs RD := fun x => (abs_map x ; abs_prop x).
+
+  End absolute.
 
 End dedekind.

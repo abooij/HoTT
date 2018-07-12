@@ -413,6 +413,10 @@ theories/Classes/interfaces/archimedean.v
 theories/Classes/interfaces/integers.v
 theories/Classes/tests/ring_tac.v
 
+theories/Analysis/Reals.v
+theories/Analysis/Cauchy.v
+theories/Analysis/Locator.v
+
 contrib/HoTTBook.v
 contrib/HoTTBookExercises.v
 contrib/Freudenthal.v
