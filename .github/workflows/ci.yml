@@ -76,14 +76,14 @@ jobs:
     - name: Run ./configure
       run: ./configure
 
-    - name: make strict-test
-      run: make strict-test
+    - name: make -j2 strict-test
+      run: make -j2 strict-test
       if: env.UPDATE_QUICK_DOC == ''
 
     - name: Build with timing
       run: |
         etc/coq-scripts/timing/make-pretty-timed.sh -j2
-        make
+        make -j2
       if: env.UPDATE_QUICK_DOC == ''
 
     - name: Test install target
