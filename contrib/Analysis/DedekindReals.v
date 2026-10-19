@@ -21,6 +21,7 @@ From HoTT.Classes Require Import
   orders.dec_fields
   interfaces.archimedean
   interfaces.cauchy.
+From HoTT.Analysis Require Import Locator.
 
 Section dedekind.
   Context `{Funext} `{Univalence}.
@@ -174,38 +175,11 @@ Section dedekind.
     assert (a0 := cut_lower_inhabited (isdedekindcut x)).
     assert (b0 := cut_upper_inhabited (isdedekindcut x)).
     strip_truncations; destruct a0 as [a0 la0], b0 as [b0 ub0].
-    set (d := e / 2 / 2).
-    set (p k := a0 + nQ k * ' d).
-    assert (step : forall k, hor (merely {a : Q & {b : Q &
-                      prod (prod (lower_cut x a) (upper_cut x b)) (b - a < ' e)}})
-                      (lower_cut x (p k))).
-    { induction k as [|k IH].
-      - apply tr, inr; unfold p; change (nQ 0%nat) with (0 : Q).
-        rewrite mult_0_l, plus_0_r; exact la0.
-      - strip_truncations; destruct IH as [close|lp]; [exact (tr (inl close))|].
-        assert (c := cut_located (isdedekindcut x) (p k + ' d) (p k + ' d + ' d)
-                       (fst (pos_plus_lt_compat_r _ _) (is_pos d))).
-        strip_truncations; destruct c as [l|u].
-        + apply tr, inr.
-          assert (pS : p (S k) = p k + ' d).
-          { unfold p; rewrite nat_to_semiring_succ, plus_mult_distr_r, mult_1_l.
-            rewrite (plus_comm (' d)), plus_assoc; reflexivity. }
-          rewrite pS; exact l.
-        + apply tr, inl, tr; exists (p k); exists (p k + ' d + ' d).
-          refine ((lp, u), _).
-          rewrite <- (plus_assoc (p k) (' d) (' d)), plus_minus_cancel_l.
-          exact (pos_quarter_double e). }
-    destruct (round_up_strict Q ((b0 - a0) / ' d)) as [N lN].
-    assert (lN' : b0 - a0 < nQ N * ' d).
-    { refine (transport (fun z => z < _) _ (pos_mult_lt_r (' d) _ _ _ lN)).
-      rewrite <- mult_assoc, (mult_comm (/ _)), dec_recip_inverse.
-      - apply mult_1_r.
-      - apply lt_ne_flip, is_pos. }
-    specialize (step N); strip_truncations; destruct step as [close|lp]; [exact close|].
-    apply Empty_rec, (irreflexivity (<) (b0 - a0)).
-    lhs' exact lN'.
-    apply flip_lt_minus_r; rewrite plus_comm.
-    exact (cut_transitive (isdedekindcut x) _ _ lp ub0).
+    refine (Trunc_functor (-1) _ (located_close (Tr (-1)) (lower_cut x) (upper_cut x)
+              (cut_located (isdedekindcut x)) (cut_transitive (isdedekindcut x))
+              (' (e / 2 / 2)) (is_pos _) a0 b0 la0 ub0)).
+    intros [a [la ub]]; exists a, (a + ' (e / 2 / 2) + ' (e / 2 / 2)); refine ((la, ub), _).
+    rewrite <- (plus_assoc a), plus_minus_cancel_l; exact (pos_quarter_double e).
   Qed.
 
   (** ** Rationals *)
