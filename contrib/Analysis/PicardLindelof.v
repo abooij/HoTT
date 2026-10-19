@@ -24,8 +24,7 @@ From HoTT.Classes Require Import
   orders.rationals.
 From HoTT.Analysis Require Import Locator.
 From HoTT_Contrib.Analysis Require Import
-  MetricSpace CauchyCompleteness BanachFixedPoint LiftsToLocators IntermediateValue FunctionSpace
-  Integral.
+  MetricSpace CauchyCompleteness BanachFixedPoint LiftsToLocators FunctionSpace Integral.
 
 Section picard_lindelof.
   Universe UQ.

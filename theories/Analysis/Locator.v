@@ -717,26 +717,20 @@ Section locator.
       rewrite (preserves_plus (f:=cast Q F)) in ltxa, ltyc.
       assert (dpos : 0 < ' (' d)).
       { rewrite <- (preserves_0 (f:=cast Q F)); apply (strictly_order_preserving _), d. }
-      destruct (fd x y _ _ ltBx ltBy (lt_bound_tight dpos ltax ltxa) (lt_bound_tight dpos ltcy ltyc))
-        as [lo hi].
+      destruct (fd x y _ _ ltBx ltBy (lt_bound_tight dpos ltax ltxa)
+                  (lt_bound_tight dpos ltcy ltyc)) as [lo hi].
       exists (f (' a) (' c)); split; [exact (frat a c)|split].
       - rewrite plus_comm; exact (fst (flip_lt_minus_r _ _ _) lo).
       - rewrite plus_comm; exact (fst (flip_lt_minus_l _ _ _) hi).
     Defined.
 
-    Local Lemma plus_minus_plus (a b c d : F) : a + b - (c + d) = a - c + (b - d).
-    Proof.
-      rewrite negate_plus_distr, <- !plus_assoc; apply ap.
-      rewrite !plus_assoc; apply (ap (+ - d)), plus_comm.
-    Qed.
-
     (** Addition varies by less than [e] when its arguments move by less than [e / 2]. *)
     Definition binarymodulus_plus : BinaryModulus (+).
     Proof.
       intros B e; exists (e / 2); intros u v u' v' _ _ cu cv.
-      rewrite plus_minus_plus, (ap (fun z => ' (' z)) (pos_split2 e)).
+      rewrite negate_plus_distr, plus_swap_middle, (ap (fun z => ' (' z)) (pos_split2 e)).
       rewrite (preserves_plus (f:=cast Q F)), negate_plus_distr.
-      split; apply plus_lt_compat; apply cu || apply cv.
+      split; apply plus_lt_compat; [apply cu|apply cv|apply cu|apply cv].
     Defined.
 
     Definition locator_plus {x y : F} (l : locator x) (m : locator y) : locator (x + y)
