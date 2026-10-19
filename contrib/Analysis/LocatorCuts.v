@@ -3,7 +3,7 @@
 (** A Dedekind cut is a pair of predicates on the rationals with eight properties: both are bounded (inhabited), closed downwards respectively upwards, open, the cut is transitive and located. Each property except closedness and transitivity has a structural counterpart, obtained by replacing [hexists] by [sig] and [hor] by [sum]; the structural counterpart of locatedness is a locator. We show that a cut with a locator has the full structure, that the structure gives a Cauchy real, and that a choice of locators for all reals contradicts continuity: it gives a map to [Bool] taking two different values, which implies the weak limited principle of omniscience. *)
 
 From HoTT Require Import Basics Types.Bool Types.Sum Types.Sigma Truncations.Core
-  Universes.HProp Universes.HSet.
+  Universes.HProp Universes.HSet Modalities.ReflectiveSubuniverse Modalities.Identity.
 From HoTT.Spaces Require Import Nat.Core.
 From HoTT.Misc Require Import CompactTypes.
 From HoTT.Classes Require Import
@@ -346,45 +346,34 @@ Section cuts.
   Section components.
     Context (L U : Q -> HProp).
 
-    (** We write [q < x] for [L q] and [x < r] for [U r] in comments. The properties of a Dedekind cut [x = (L, U)]. *)
+    (** We write [q < x] for [L q] and [x < r] for [U r] in comments. The properties of a Dedekind cut [x = (L, U)] and their structural counterparts are the same statements in two reflective subuniverses [O]: for the propositional truncation, with [hexists] and [hor], they are the properties of a Dedekind cut; for the identity modality [purely], with [sig] and [sum], their structural counterparts. The counterpart of locatedness is a locator. Closedness and transitivity are their own counterparts. *)
 
-    Definition BoundedLower := hexists L.
-    Definition BoundedUpper := hexists U.
+    Definition BoundedLower (O : ReflectiveSubuniverse) := O {q : Q & L q}.
+    Definition BoundedUpper (O : ReflectiveSubuniverse) := O {r : Q & U r}.
     Definition ClosedLower := forall q q', q < q' -> L q' -> L q.
     Definition ClosedUpper := forall r r', r' < r -> U r' -> U r.
-    Definition OpenLower := forall q, L q -> hexists (fun q' => prod (q < q') (L q')).
-    Definition OpenUpper := forall r, U r -> hexists (fun r' => prod (r' < r) (U r')).
+    Definition OpenLower (O : ReflectiveSubuniverse)
+      := forall q, L q -> O {q' : Q & prod (q < q') (L q')}.
+    Definition OpenUpper (O : ReflectiveSubuniverse)
+      := forall r, U r -> O {r' : Q & prod (r' < r) (U r')}.
     Definition CutTransitive := forall q r, L q -> U r -> q < r.
-    Definition CutLocated := forall q r, q < r -> hor (L q) (U r).
+    Definition CutLocated (O : ReflectiveSubuniverse) := forall q r, q < r -> O (sum (L q) (U r)).
 
-    (** Their structural counterparts; closedness and transitivity are their own counterparts. *)
-    Definition LowerBound := {q : Q & L q}.
-    Definition UpperBound := {r : Q & U r}.
-    Definition LowerRounding := forall q, L q -> {q' : Q & prod (q < q') (L q')}.
-    Definition UpperRounding := forall r, U r -> {r' : Q & prod (r' < r) (U r')}.
-    Definition CutLocator := forall q r, q < r -> L q + U r.
-
-    (** Being a Dedekind cut, a proposition. *)
-    Record IsCut := {
-      iscut_bounded_lower : BoundedLower ;
-      iscut_bounded_upper : BoundedUpper ;
+    Record IsCutIn (O : ReflectiveSubuniverse) := {
+      iscut_bounded_lower : BoundedLower O ;
+      iscut_bounded_upper : BoundedUpper O ;
       iscut_closed_lower : ClosedLower ;
       iscut_closed_upper : ClosedUpper ;
-      iscut_open_lower : OpenLower ;
-      iscut_open_upper : OpenUpper ;
+      iscut_open_lower : OpenLower O ;
+      iscut_open_upper : OpenUpper O ;
       iscut_transitive : CutTransitive ;
-      iscut_located : CutLocated }.
+      iscut_located : CutLocated O }.
+
+    (** Being a Dedekind cut, a proposition. *)
+    Definition IsCut := IsCutIn (Tr (-1)).
 
     (** The structure of a Dedekind cut. *)
-    Record CutStructure := {
-      cutstructure_lower_bound : LowerBound ;
-      cutstructure_upper_bound : UpperBound ;
-      cutstructure_closed_lower : ClosedLower ;
-      cutstructure_closed_upper : ClosedUpper ;
-      cutstructure_lower_rounding : LowerRounding ;
-      cutstructure_upper_rounding : UpperRounding ;
-      cutstructure_transitive : CutTransitive ;
-      cutstructure_locator : CutLocator }.
+    Definition CutStructure := IsCutIn purely.
 
     Definition issig_iscut : _ <~> IsCut := ltac:(issig).
 
@@ -393,23 +382,21 @@ Section cuts.
       exact (istrunc_equiv_istrunc _ issig_iscut).
     Qed.
 
-    (** The structure of a cut gives the property, by truncating each component. *)
-    Definition iscut_cutstructure (s : CutStructure) : IsCut.
-    Proof.
-      destruct s as [[q lq] [r ur] cl cu ol ou t l].
-      snapply Build_IsCut.
-      - exact (tr (q; lq)).
-      - exact (tr (r; ur)).
-      - exact cl.
-      - exact cu.
-      - intros q' lq'; exact (tr (ol q' lq')).
-      - intros r' ur'; exact (tr (ou r' ur')).
-      - exact t.
-      - intros q' r' ltqr; exact (tr (l q' r' ltqr)).
-    Defined.
+    (** A map [O X -> O' X] for every [X] turns a cut in [O] into a cut in [O']. In particular the structure of a cut gives the property, by truncating each component. *)
+    Definition iscutin_functor {O O' : ReflectiveSubuniverse} (t : forall X, O X -> O' X)
+      (c : IsCutIn O)
+      : IsCutIn O'
+      := {| iscut_bounded_lower := t _ (iscut_bounded_lower O c);
+            iscut_bounded_upper := t _ (iscut_bounded_upper O c);
+            iscut_closed_lower := iscut_closed_lower O c;
+            iscut_closed_upper := iscut_closed_upper O c;
+            iscut_open_lower q l := t _ (iscut_open_lower O c q l);
+            iscut_open_upper r u := t _ (iscut_open_upper O c r u);
+            iscut_transitive := iscut_transitive O c;
+            iscut_located q r ltqr := t _ (iscut_located O c q r ltqr) |}.
 
     Definition iscut_merely_cutstructure `{Funext} : merely CutStructure -> IsCut
-      := Trunc_rec iscut_cutstructure.
+      := Trunc_rec (iscutin_functor (O:=purely) (O':=Tr (-1)) (fun X => tr)).
 
     (** The properties are those of [IsDedekindCut], with roundedness split into closedness and openness. *)
     Lemma iscut_iff_isdedekindcut : IsCut <-> IsDedekindCut Q L U.
@@ -424,7 +411,7 @@ Section cuts.
           apply Trunc_rec; intros [r' [ltr'r ur']]; exact (cu r r' ltr'r ur').
         + exact t.
         + exact l.
-      - intros c; snapply Build_IsCut.
+      - intros c; snapply Build_IsCutIn.
         + exact (cut_lower_inhabited c).
         + exact (cut_upper_inhabited c).
         + intros q q' ltqq' lq'; apply (snd (cut_lower_rounded c q)), tr; exact (q'; (ltqq', lq')).
@@ -462,7 +449,7 @@ Section cuts.
     Qed.
 
     Definition cut_locator_iff_locator (x : RD)
-      : CutLocator (lower_cut Q x) (upper_cut Q x) <-> locator Q RD x.
+      : CutLocated (lower_cut Q x) (upper_cut Q x) purely <-> locator Q RD x.
     Proof.
       split; intros l q r ltqr; generalize (l q r ltqr); apply functor_sum.
       1,3: apply lt_rationals_dedekind_l.
@@ -494,22 +481,22 @@ Section cuts.
     (** A cut with a locator has the full structure of a cut: bounds by bounded search, and openness from the Archimedean structure, using locators for rationals. *)
     Definition cut_dedekind : RD := Build_DedekindReals Q L U (fst (iscut_iff_isdedekindcut L U) c).
 
-    Context (l : CutLocator L U).
+    Context (l : CutLocated L U purely).
     Local Definition l' : locator Q RD cut_dedekind := fst (cut_locator_iff_locator cut_dedekind) l.
 
-    Definition lower_bound_cut_locator : LowerBound L.
+    Definition lower_bound_cut_locator : BoundedLower L purely.
     Proof.
       destruct (lower_bound Q RD l') as [q ltqx].
       exact (q; fst (lt_rationals_dedekind_l q cut_dedekind) ltqx).
     Defined.
 
-    Definition upper_bound_cut_locator : UpperBound U.
+    Definition upper_bound_cut_locator : BoundedUpper U purely.
     Proof.
       destruct (upper_bound Q RD l') as [r ltxr].
       exact (r; fst (lt_rationals_dedekind_r r cut_dedekind) ltxr).
     Defined.
 
-    Definition lower_rounding_cut_locator : LowerRounding L.
+    Definition lower_rounding_cut_locator : OpenLower L purely.
     Proof.
       intros q lq.
       destruct (archimedean_structure Q RD (locator_left Q RD q) l'
@@ -517,7 +504,7 @@ Section cuts.
       exact (q'; (strictly_order_reflecting _ _ _ ltqq', fst (lt_rationals_dedekind_l q' cut_dedekind) ltq'x)).
     Defined.
 
-    Definition upper_rounding_cut_locator : UpperRounding U.
+    Definition upper_rounding_cut_locator : OpenUpper U purely.
     Proof.
       intros r ur.
       destruct (archimedean_structure Q RD l' (locator_left Q RD r)
@@ -526,17 +513,17 @@ Section cuts.
     Defined.
 
     Definition cutstructure_iscut_locator : CutStructure L U
-      := {| cutstructure_lower_bound := lower_bound_cut_locator;
-            cutstructure_upper_bound := upper_bound_cut_locator;
-            cutstructure_closed_lower := iscut_closed_lower L U c;
-            cutstructure_closed_upper := iscut_closed_upper L U c;
-            cutstructure_lower_rounding := lower_rounding_cut_locator;
-            cutstructure_upper_rounding := upper_rounding_cut_locator;
-            cutstructure_transitive := iscut_transitive L U c;
-            cutstructure_locator := l |}.
+      := {| iscut_bounded_lower := lower_bound_cut_locator;
+            iscut_bounded_upper := upper_bound_cut_locator;
+            iscut_closed_lower := iscut_closed_lower L U _ c;
+            iscut_closed_upper := iscut_closed_upper L U _ c;
+            iscut_open_lower := lower_rounding_cut_locator;
+            iscut_open_upper := upper_rounding_cut_locator;
+            iscut_transitive := iscut_transitive L U _ c;
+            iscut_located := l |}.
 
     (** A cut which merely has a locator is a Cauchy real. *)
-    Lemma iscauchyreal_iscut_merely_locator : merely (CutLocator L U) -> IsCauchyReal Q RD cut_dedekind.
+    Lemma iscauchyreal_iscut_merely_locator : merely (CutLocated L U purely) -> IsCauchyReal Q RD cut_dedekind.
     Proof.
       intros ml; apply iscauchyreal_merely_locator.
       exact (Trunc_functor _ (fst (cut_locator_iff_locator cut_dedekind)) ml).
@@ -552,7 +539,7 @@ Section cuts.
     Lemma iscauchyreal_merely_cutstructure {L U : Q -> HProp} (s : merely (CutStructure L U))
       : IsCauchyReal Q RD (cut_dedekind (iscut_merely_cutstructure L U s)).
     Proof.
-      exact (iscauchyreal_iscut_merely_locator _ (Trunc_functor _ (cutstructure_locator L U) s)).
+      exact (iscauchyreal_iscut_merely_locator _ (Trunc_functor _ (iscut_located L U purely) s)).
     Qed.
 
     (** If every cut merely had the structure of a cut, every Dedekind real would be a Cauchy real, so that by [isequiv_cauchy_reals_to_dedekind_iff] the Cauchy reals and the Dedekind reals would coincide. This is not provable, since they differ in some models (Lubarsky, "On the Cauchy completeness of the constructive Cauchy reals"); here we only formalize the implication, not the model. *)
@@ -562,7 +549,7 @@ Section cuts.
     Proof.
       apply (iscauchyreal_merely_locator).
       refine (Trunc_functor _ _ (h _ _ (snd (iscut_iff_isdedekindcut _ _) (isdedekindcut Q x)))).
-      intro s; exact (fst (cut_locator_iff_locator x) (cutstructure_locator _ _ s)).
+      intro s; exact (fst (cut_locator_iff_locator x) (iscut_located _ _ purely s)).
     Qed.
 
     Context (Z : Type) {Zap : Apart Z} {Zplus : Plus Z} {Zmult : Mult Z}

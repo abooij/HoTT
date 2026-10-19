@@ -713,7 +713,7 @@ Definition Booij2020Thesis_6_10_2_item_vi := @wlpo_locator_choice.
 (* ================================================== 6.10.3 *)
 (** Theorem 6.10.3 *)
 
-(** The property [IsCut] and the structure [CutStructure] of a pair of predicates on the rationals, and how they relate via locators. *)
+(** The property [IsCut] and the structure [CutStructure] of a pair of predicates on the rationals, and how they relate via locators. Both are instances of [IsCutIn O], for [O] the propositional truncation and the identity modality, so items i to viii and ix to xiii are the same definitions in these two reflective subuniverses. *)
 Definition Booij2020Thesis_6_10_3_item_i := @BoundedLower.
 Definition Booij2020Thesis_6_10_3_item_ii := @BoundedUpper.
 Definition Booij2020Thesis_6_10_3_item_iii := @ClosedLower.
@@ -722,15 +722,15 @@ Definition Booij2020Thesis_6_10_3_item_v := @OpenLower.
 Definition Booij2020Thesis_6_10_3_item_vi := @OpenUpper.
 Definition Booij2020Thesis_6_10_3_item_vii := @CutTransitive.
 Definition Booij2020Thesis_6_10_3_item_viii := @CutLocated.
-Definition Booij2020Thesis_6_10_3_item_ix := @LowerBound.
-Definition Booij2020Thesis_6_10_3_item_x := @UpperBound.
-Definition Booij2020Thesis_6_10_3_item_xi := @LowerRounding.
-Definition Booij2020Thesis_6_10_3_item_xii := @UpperRounding.
-Definition Booij2020Thesis_6_10_3_item_xiii := @CutLocator.
+Definition Booij2020Thesis_6_10_3_item_ix := @BoundedLower.
+Definition Booij2020Thesis_6_10_3_item_x := @BoundedUpper.
+Definition Booij2020Thesis_6_10_3_item_xi := @OpenLower.
+Definition Booij2020Thesis_6_10_3_item_xii := @OpenUpper.
+Definition Booij2020Thesis_6_10_3_item_xiii := @CutLocated.
 Definition Booij2020Thesis_6_10_3_item_xiv := @IsCut.
 Definition Booij2020Thesis_6_10_3_item_xv := @CutStructure.
 Definition Booij2020Thesis_6_10_3_item_xvi := @iscut_iff_isdedekindcut.
-Definition Booij2020Thesis_6_10_3_item_xvii := @iscut_cutstructure.
+Definition Booij2020Thesis_6_10_3_item_xvii := @iscutin_functor.
 Definition Booij2020Thesis_6_10_3_item_xviii := @iscut_merely_cutstructure.
 Definition Booij2020Thesis_6_10_3_item_xix := @cut_locator_iff_locator.
 Definition Booij2020Thesis_6_10_3_item_xx := @lower_bound_cut_locator.
