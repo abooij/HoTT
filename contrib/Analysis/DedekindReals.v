@@ -3,7 +3,7 @@
 (** The Dedekind reals over a model [Q] of the rationals: pairs of a lower and an upper cut, predicates on [Q] that are inhabited, rounded, transitive and located.  We show that they form a set and an Archimedean ordered field, and that they are Cauchy complete, with the limit given by an explicit cut. *)
 
 From HoTT Require Import Basics Spaces.Nat.Core Types.Sigma Types.Forall Types.Sum Types.Universe
-  Truncations.Core Universes.HProp Universes.TruncType.
+  Truncations.Core Universes.HProp Universes.TruncType Misc.BoundedSearch.
 From HoTT.Classes Require Import
   interfaces.abstract_algebra
   interfaces.orders
@@ -165,7 +165,7 @@ Section dedekind.
     rewrite (plus_comm a), <- plus_assoc, plus_negate_r; apply plus_0_r.
   Qed.
 
-  (** A Dedekind cut has a lower and an upper bound arbitrarily close to each other: walk up from a lower bound in steps of [e / 4], using locatedness at each step. *)
+  (** A Dedekind cut has a lower and an upper bound arbitrarily close to each other: walk up from a lower bound in steps of [e / 4], using locatedness at each step, until a point plus [e / 2] is an upper bound. The walk stops before it passes an upper bound. *)
   Lemma cut_approximate (x : R) (e : Qpos Q)
     : merely {a : Q & {b : Q & prod (prod (lower_cut x a) (upper_cut x b)) (b - a < ' e)}}.
   Proof.
@@ -174,36 +174,29 @@ Section dedekind.
     strip_truncations; destruct a0 as [a0 la0], b0 as [b0 ub0].
     set (d := e / 2 / 2).
     set (p k := a0 + nQ k * ' d).
-    assert (step : forall k, hor (merely {a : Q & {b : Q &
-                      prod (prod (lower_cut x a) (upper_cut x b)) (b - a < ' e)}})
-                      (lower_cut x (p k))).
-    { induction k as [|k IH].
-      - apply tr, inr; unfold p; change (nQ 0%nat) with (0 : Q).
-        rewrite mult_0_l, plus_0_r; exact la0.
-      - strip_truncations; destruct IH as [close|lp]; [exact (tr (inl close))|].
-        assert (c := cut_located (isdedekindcut x) (p k + ' d) (p k + ' d + ' d)
-                       (fst (pos_plus_lt_compat_r _ _) (is_pos d))).
-        strip_truncations; destruct c as [l|u].
-        + apply tr, inr.
-          assert (pS : p (S k) = p k + ' d).
-          { unfold p; rewrite nat_to_semiring_succ, plus_mult_distr_r, mult_1_l.
-            rewrite (plus_comm (' d)), plus_assoc; reflexivity. }
-          rewrite pS; exact l.
-        + apply tr, inl, tr; exists (p k); exists (p k + ' d + ' d).
-          refine ((lp, u), _).
-          rewrite <- (plus_assoc (p k) (' d) (' d)), plus_minus_cancel_l.
-          exact (pos_quarter_double e). }
+    assert (pS : forall k, p (S k) = p k + ' d).
+    { intro k; unfold p; rewrite nat_to_semiring_succ, plus_mult_distr_r, mult_1_l.
+      rewrite (plus_comm (' d)), plus_assoc; reflexivity. }
     destruct (round_up_strict Q ((b0 - a0) / ' d)) as [N lN].
     assert (lN' : b0 - a0 < nQ N * ' d).
     { refine (transport (fun z => z < _) _ (pos_mult_lt_r (' d) _ _ _ lN)).
       rewrite <- mult_assoc, (mult_comm (/ _)), dec_recip_inverse.
       - apply mult_1_r.
       - apply lt_ne_flip, is_pos. }
-    specialize (step N); strip_truncations; destruct step as [close|lp]; [exact close|].
-    apply Empty_rec, (irreflexivity (<) (b0 - a0)).
-    lhs' exact lN'.
-    apply flip_lt_minus_r; rewrite plus_comm.
-    exact (cut_transitive (isdedekindcut x) _ _ lp ub0).
+    refine (Trunc_functor (-1) _ (O_walk (Tr (-1)) (fun k => lower_cut x (p k))
+                                    (fun k => upper_cut x (p k + ' d + ' d)) N _ _)).
+    - intros [[k [_ [lp u]]]|lp].
+      + exists (p k); exists (p k + ' d + ' d); refine ((lp, u), _).
+        rewrite <- (plus_assoc (p k) (' d) (' d)), plus_minus_cancel_l.
+        exact (pos_quarter_double e).
+      + apply Empty_rec, (irreflexivity (<) (b0 - a0)).
+        lhs' exact lN'.
+        apply flip_lt_minus_r; rewrite plus_comm.
+        exact (cut_transitive (isdedekindcut x) _ _ lp ub0).
+    - intros k _ _; rewrite pS.
+      exact (cut_located (isdedekindcut x) _ _ (fst (pos_plus_lt_compat_r _ _) (is_pos d))).
+    - unfold p; change (nQ 0%nat) with (0 : Q).
+      rewrite mult_0_l, plus_0_r; exact la0.
   Qed.
 
   (** ** Rationals *)
