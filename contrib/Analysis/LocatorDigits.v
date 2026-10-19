@@ -93,7 +93,7 @@ Section digits.
   Context (F : Type) `{Forderedfield : OrderedField F}.
   Context {Farchimedean : ArchimedeanProperty Q F} {Qroundup : RoundUpStrict Q}.
   Context `{Funext} `{Univalence}.
-  Context (Q_eq : nat <~> Q).
+  Context (Q_enum : nat -> Q) `{!IsSurjection Q_enum}.
   Context (Z : Type) {Zap : Apart Z} {Zplus : Plus Z} {Zmult : Mult Z}
     {Zzero : Zero Z} {Zone : One Z} {Zneg : Negate Z} {Zle : Le Z} {Zlt : Lt Z}
     {ZtoRing : IntegersToRing Z} {Zints : Integers Z} {Ztriv : TrivialApart Z}.
@@ -117,7 +117,7 @@ Section digits.
   Definition integer_bound {x : F} (l : locator Q F x)
     : {k : Z & ' (' k - 1) < x < ' (' k + 1)}.
   Proof.
-    destruct (tight_bound Q F Q_eq l 1) as [u [ltux ltxu]].
+    destruct (tight_bound Q F Q_enum l 1) as [u [ltux ltxu]].
     destruct (integer_floor u (Z:=Z)) as [j [leju ltuj]].
     exists (j + 1).
     change (' (j + 1)) with (integers_to_ring Z Q (j + 1)).
@@ -474,7 +474,7 @@ Section limits.
     {Qrats : Rationals Q} {Qdec_paths : DecidablePaths Q} {Qtriv : TrivialApart Q}.
   Context (F : Type) `{Forderedfield : OrderedField F}.
   Context {Farchimedean : ArchimedeanProperty Q F} {Qroundup : RoundUpStrict Q}.
-  Context `{Funext} `{Univalence} (Q_eq : nat <~> Q).
+  Context `{Funext} `{Univalence} (Q_enum : nat -> Q) `{!IsSurjection Q_enum}.
 
   Local Existing Instance qinc.
 
@@ -493,7 +493,7 @@ Section limits.
     - intro l.
       (* Go through signed digits in base [2], with the integers implemented as pairs of naturals. *)
       exact (cauchy_sequence_signed_digits Q F (NatPair.Z nat) 1 _
-               (signed_digits_locator Q F Q_eq (NatPair.Z nat) 1 _ l)).
+               (signed_digits_locator Q F Q_enum (NatPair.Z nat) 1 _ l)).
     - intros [s islim]; exact (locator_cauchy_sequence s islim).
   Qed.
 

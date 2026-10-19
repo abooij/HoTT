@@ -35,9 +35,9 @@ Section locator.
 
   Context `{Funext} `{Univalence}.
 
-  (* Assume we have enumerations of the rationals, and of pairs of ordered rationals. *)
-  Context (Q_eq : nat <~> Q).
-  Context (QQpos_eq : nat <~> Q * Qpos Q).
+  (** Assume we have surjections from [nat] onto the rationals, and onto pairs of a rational and a positive rational, along which we search. *)
+  Context (Q_enum : nat -> Q) `{!IsSurjection Q_enum}.
+  Context (QQpos_enum : nat -> Q * Qpos Q) `{!IsSurjection QQpos_enum}.
 
   Instance qinc : Cast Q F := rationals_to_field Q F.
 
@@ -242,7 +242,7 @@ Section locator.
     Definition lower_bound : {q : Q | ' q < x}.
     Proof.
       assert (qP_lower : {q : Q | P_lower q})
-        by exact (minimal_n_alt_type Q Q_eq P_lower _ P_lower_inhab).
+        by exact (minimal_n_alt_type Q Q_enum P_lower _ P_lower_inhab).
       destruct qP_lower as [q Pq].
       exists (q - 1).
       unfold P_lower in Pq. simpl in *.
@@ -280,7 +280,7 @@ Section locator.
     Definition upper_bound : {r : Q | x < ' r}.
     Proof.
       assert (rP_upper : {r : Q | P_upper r})
-        by exact (minimal_n_alt_type Q Q_eq P_upper _ P_upper_inhab).
+        by exact (minimal_n_alt_type Q Q_enum P_upper _ P_upper_inhab).
       destruct rP_upper as [r Pr].
       exists (r + 1).
       unfold P_upper in Pr. simpl in *.
@@ -509,13 +509,8 @@ Section locator.
 
     Definition archimedean_structure : {q : Q | x < 'q < y}.
     Proof.
-      assert (R : sig P).
-      {
-        apply minimal_n_alt_type.
-        - exact QQpos_eq.
-        - exact P_dec.
-        - exact P_inhab.
-      }
+      assert (R : sig P)
+        by exact (minimal_n_alt_type _ QQpos_enum P P_dec P_inhab).
       unfold P in R.
       destruct R as [[q eps] [lleft mright]].
       exists q; split.
