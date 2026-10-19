@@ -10,6 +10,7 @@ The branch `abooij/claude-locators-track-w` stacks all prototypes on top of `9ee
 | `7310aa0` | P2 located walks for locators and cuts | yes (`406066d`) |
 | `7de09fb`, `e8d5842` | P3 Dedekind arithmetic by extension | needs P2 (both edit `cut_approximate`) |
 | `bc38353` | P4 Picard–Lindelöf radius | yes (`f4687a4`) |
+| (last code commit) | P3: rename hypotheses `is`, a keyword on Rocq dev | part of P3 |
 
 The independent copies were built and tested in separate worktrees. The stack passes `bin/build`, `bin/build test` and `bin/build check`; see "Validation" at the end for Rocq 9.2 and dev.
 
@@ -252,5 +253,6 @@ Recommendation: put the ℚ-level ones in `Classes/theory/rationals.v` (but outs
 
 - Stack (`abooij/claude-locators-track-w`): `bin/build`, `bin/build test` and `bin/build check` pass with Rocq 9.1.
 - Each independent commit (`48703c7`, `406066d`, `f4687a4`) was built (`bin/build`, `bin/build test`) on top of the base in its own worktree; `31ed89c` and `1a2ad32` on top of `406066d`.
-- Rocq 9.2 and dev: see the message to the coordinating session for the results of `ROCQ_IMAGE=rocq/rocq-prover:9.2 bin/build` and `ROCQ_IMAGE=rocq/rocq-prover:dev bin/build` on the stack.
+- Rocq 9.2 (`ROCQ_IMAGE=rocq/rocq-prover:9.2 bin/build`, separate worktree): the stack builds.
+- Rocq dev (`ROCQ_IMAGE=rocq/rocq-prover:dev bin/build`, separate worktree): the stack builds after the last code commit, which renames hypotheses called `is` (a keyword on dev) in the new code of P3; that rename belongs with P3 when it is adopted.
 - No new axioms or admits. Names and statements used by `contrib/Booij2020Thesis.v` are unchanged, so no alias needed updating. `BLUEPRINT.md` is not edited: its weak-spot entries should be updated by whoever adopts the proposals.

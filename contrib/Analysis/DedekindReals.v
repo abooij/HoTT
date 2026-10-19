@@ -535,9 +535,9 @@ Section dedekind.
       strip_truncations; destruct w as [w fw].
       assert (I := merely_cutbounds_close I0 w); assert (J := merely_cutbounds_close J0 w).
       strip_truncations; destruct I as [I [HI wI]], J as [J [HJ wJ]].
-      apply tr; exists I, J; intros s s' t t' is is' it it'.
+      apply tr; exists I, J; intros s s' t t' si si' it it'.
       apply fw; try (apply HI; assumption); try (apply HJ; assumption).
-      - exact (interval_close _ _ _ _ _ (fst is) (snd is) (fst is') (snd is') wI).
+      - exact (interval_close _ _ _ _ _ (fst si) (snd si) (fst si') (snd si') wI).
       - exact (interval_close _ _ _ _ _ (fst it) (snd it) (fst it') (snd it') wJ).
     Qed.
 
@@ -545,16 +545,16 @@ Section dedekind.
     Proof.
       assert (h := merely_box_close 1); strip_truncations; destruct h as [I [J h]].
       apply tr; exists (f (bound_lo I) (bound_lo J) - 1); apply tr; exists I; apply tr; exists J.
-      intros s t is it; apply lt_le; unfold PropHolds.
-      exact (close_lt_l _ _ _ (h _ _ _ _ (in_bounds_lo I) is (in_bounds_lo J) it)).
+      intros s t si it; apply lt_le; unfold PropHolds.
+      exact (close_lt_l _ _ _ (h _ _ _ _ (in_bounds_lo I) si (in_bounds_lo J) it)).
     Qed.
 
     Lemma merely_boxbelow : hexists BoxBelow.
     Proof.
       assert (h := merely_box_close 1); strip_truncations; destruct h as [I [J h]].
       apply tr; exists (f (bound_lo I) (bound_lo J) + 1); apply tr; exists I; apply tr; exists J.
-      intros s t is it; apply lt_le; unfold PropHolds.
-      exact (close_lt_r _ _ _ (h _ _ _ _ (in_bounds_lo I) is (in_bounds_lo J) it)).
+      intros s t si it; apply lt_le; unfold PropHolds.
+      exact (close_lt_r _ _ _ (h _ _ _ _ (in_bounds_lo I) si (in_bounds_lo J) it)).
     Qed.
 
     (** For locatedness, we take a box on which the values of [f] are closer than [(r - q) / 2], and compare the value at a corner with the midpoint of [q] and [r]. *)
@@ -567,11 +567,11 @@ Section dedekind.
       { rewrite <- plus_assoc; change (q + ' (e + e) = r).
         rewrite <- (pos_split2 (Qpos_diff q r ltqr)); symmetry; apply plus_conjugate_alt. }
       destruct (le_or_lt (q + ' e) v) as [lev|ltv]; apply tr; [left|right];
-        apply tr; exists I; apply tr; exists J; intros s t is it; apply lt_le; unfold PropHolds.
-      - refine (le_lt_trans _ _ _ _ (close_lt_l _ _ _ (h _ _ _ _ (in_bounds_lo I) is (in_bounds_lo J) it))).
+        apply tr; exists I; apply tr; exists J; intros s t si it; apply lt_le; unfold PropHolds.
+      - refine (le_lt_trans _ _ _ _ (close_lt_l _ _ _ (h _ _ _ _ (in_bounds_lo I) si (in_bounds_lo J) it))).
         apply flip_le_minus_l; rewrite negate_involutive; exact lev.
       - rewrite <- p.
-        lhs' exact (close_lt_r _ _ _ (h _ _ _ _ (in_bounds_lo I) is (in_bounds_lo J) it)).
+        lhs' exact (close_lt_r _ _ _ (h _ _ _ _ (in_bounds_lo I) si (in_bounds_lo J) it)).
         apply (strictly_order_preserving (+ _)); exact ltv.
     Qed.
   End extension.
@@ -805,8 +805,8 @@ Section dedekind.
       - change (q < f a b) in p; set (e := Qpos_diff q (f a b) p / 2).
         assert (h := merely_box_close f [a] [b] e); strip_truncations; destruct h as [I [J h]].
         apply tr; exists (f a b - ' e); split; [exact (lt_minus_half_diff q (f a b) p)|].
-        apply tr; exists I; apply tr; exists J; intros s t is it; apply lt_le; unfold PropHolds.
-        exact (close_lt_l _ _ _ (h _ _ _ _ (in_bounds_rational a I) is (in_bounds_rational b J) it)).
+        apply tr; exists I; apply tr; exists J; intros s t si it; apply lt_le; unfold PropHolds.
+        exact (close_lt_l _ _ _ (h _ _ _ _ (in_bounds_rational a I) si (in_bounds_rational b J) it)).
     Qed.
 
     (** The extension of a commutative operation is commutative. *)
@@ -833,9 +833,9 @@ Section dedekind.
       intros h; strip_truncations; destruct h as [I1 h]; strip_truncations; destruct h as [J1 h].
       destruct (cutbounds_intersect I I1) as [I2 HI2], (cutbounds_intersect J J1) as [J2 HJ2].
       destruct (HI2 _ (in_bounds_lo I2)) as [i i1], (HJ2 _ (in_bounds_lo J2)) as [j j1].
-      apply tr; exists I'; apply tr; exists J'; intros s t is it.
+      apply tr; exists I'; apply tr; exists J'; intros s t si it.
       refine (lt_le _ _ (le_lt_trans _ _ _ (order_preserving (+ - ' e) _ _ (h _ _ i1 j1)) _)).
-      exact (close_lt_l _ _ _ (osc _ _ _ _ (HI _ i) (HI' _ is) (HJ _ j) (HJ' _ it))).
+      exact (close_lt_l _ _ _ (osc _ _ _ _ (HI _ i) (HI' _ si) (HJ _ j) (HJ' _ it))).
     Qed.
 
     (** The extension of [f] is continuous: we take a box [I * J] around [(x, y)] so small that the values of [f] on the box [I' * J'] obtained by widening it by [2 d] on each side vary by less than [e / 2]. Then [I' * J'] contains a box around [(x', y')] for all [(x', y')] which are [d]-close to [(x, y)], and we can move lower bounds on boxes between [(x, y)] and [(x', y')]. *)
@@ -861,14 +861,14 @@ Section dedekind.
       assert (osc : forall s s' t t', a' ≤ s ≤ b' -> a' ≤ s' ≤ b' -> c' ≤ t ≤ d' -> c' ≤ t' ≤ d'
                                      -> close (e / 2) (f s t) (f s' t')).
       { assert (inab : forall s, a' ≤ s ≤ b' -> a ≤ s ≤ b)
-          by (intros s is; exact (widen_bounds _ _ _ _ _ _ (qpos_min_le_r (w / 2 / 2) 1) (HI _ (in_bounds_lo I))
-                                    (HI _ (in_bounds_hi I)) is)).
+          by (intros s si; exact (widen_bounds _ _ _ _ _ _ (qpos_min_le_r (w / 2 / 2) 1) (HI _ (in_bounds_lo I))
+                                    (HI _ (in_bounds_hi I)) si)).
         assert (incd : forall t, c' ≤ t ≤ d' -> c ≤ t ≤ d)
           by (intros t it; exact (widen_bounds _ _ _ _ _ _ (qpos_min_le_r (w / 2 / 2) 1) (HJ _ (in_bounds_lo J))
                                     (HJ _ (in_bounds_hi J)) it)).
-        intros s s' t t' is is' it it'.
+        intros s s' t t' si si' it it'.
         apply fw; try (apply inab; assumption); try (apply incd; assumption).
-        - exact (interval_close _ _ _ _ _ (fst is) (snd is) (fst is') (snd is')
+        - exact (interval_close _ _ _ _ _ (fst si) (snd si) (fst si') (snd si')
                    (widen_lt _ _ _ _ wI (qpos_min_le_l _ _))).
         - exact (interval_close _ _ _ _ _ (fst it) (snd it) (fst it') (snd it')
                    (widen_lt _ _ _ _ wJ (qpos_min_le_l _ _))). }
@@ -1084,10 +1084,10 @@ Section dedekind.
   Proof.
     destruct (rational_bound a b) as [X [Xpos [lX lX']]], (rational_bound c d) as [W [Wpos [lW lW']]].
     destruct (small_factor e (X + W) (pos_plus_compat _ _ Xpos Wpos)) as [D lD].
-    exists D; intros s s' t t' is is' it it' cs ct.
+    exists D; intros s s' t t' si si' it it' cs ct.
     assert (p : X * ' D + ' D * W = ' D * (X + W)) by (rewrite (mult_comm X), plus_mult_distr_l; reflexivity).
     destruct (mult_minus_mult_lt_bound s t s' t' X W (' D)
-                (lt_le_trans _ _ _ lX (fst is), le_lt_trans _ _ _ (snd is) lX')
+                (lt_le_trans _ _ _ lX (fst si), le_lt_trans _ _ _ (snd si) lX')
                 (lt_le_trans _ _ _ lW (fst it'), le_lt_trans _ _ _ (snd it') lW') cs ct) as [lo hi].
     rewrite p in lo, hi; split.
     - exact (transitivity (snd (flip_lt_negate _ _) lD) lo).
