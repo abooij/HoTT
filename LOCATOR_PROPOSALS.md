@@ -190,5 +190,5 @@ The branch `abooij/claude-locators-track-l` holds an earlier, unrelated track (l
 
 - Every stack commit and both independent variants: `bin/build` and `bin/build test` pass (Rocq 9.1).
 - After the merge (`895d19d`) and the clean-up (`4e62c9e`): `bin/build` and `bin/build test` pass.
-- `bin/build check`, Rocq 9.2 and Rocq dev: see the final section below.
+- On `4e62c9e` (the tree of the branch head): `bin/build check` (including `rocqchk`) passes with Rocq 9.1, and `bin/build` passes with Rocq 9.2 and with Rocq dev (`ROCQ_IMAGE=…`, each in its own worktree).
 - `git diff --check` is clean on every commit.
