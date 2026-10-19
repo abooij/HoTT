@@ -442,34 +442,40 @@ Section ivt.
                approximate_root_between).
     Qed.
 
-    (** The invariant of the bisection: at every stage, either [f] is close to [0] at one of the midpoints so far, or [f] is still negative at the lower endpoint and positive at the upper endpoint. *)
-    Lemma bisect_invariant (m : nat)
-      : hor {j : nat & prod (j < m)%nat (- ' (' e) < f (c j) < ' (' e))}
-          (prod (f (z m) < 0) (0 < f (w m))).
+    (** A step of the bisection: if [f] is negative at the lower and positive at the upper endpoint, then merely either it is so again for the next interval, or [f] is close to [0] at the midpoint. *)
+    Local Lemma bisect_step_signs (m : nat) (signs : prod (f (z m) < 0) (0 < f (w m)))
+      : hor (prod (f (z (S m)) < 0) (0 < f (w (S m)))) (- ' (' e) < f (c m) < ' (' e)).
     Proof.
+      destruct signs as [neg pos].
       assert (halfpos := pos_rationals_to_field_qpos Q (F:=F) (e / 2)).
-      induction m as [|m IH].
-      1: exact (tr (inr (fa, fb))).
-      strip_truncations; destruct IH as [[j [ltj close]]|[neg pos]].
-      1: exact (tr (inl (j; (leq_succ_r ltj, close)))).
       (* Compare [f (c m)] with [e / 2] and [e], and with [- e] and [- e / 2]. *)
       assert (ltte : (' (' (e / 2)) : F) < ' (' e))
         by exact (strictly_order_preserving _ _ _ (qpos_half_lt e)).
       assert (h := cotransitive ltte (f (c m))); strip_truncations.
       destruct h as [lt|lte].
       - (* The next interval is the left half, whose upper endpoint is [c m]. *)
-        apply tr, inr.
+        apply tr, inl.
         assert (d1 := bisect_weight_1 f _ _ lt).
         rewrite (bisect_lower_1 dec a b m d1), (bisect_upper_1 dec a b m d1).
         exact (neg, transitivity halfpos lt).
       - assert (h := cotransitive (snd (flip_lt_negate _ _) ltte) (f (c m))).
         strip_truncations; destruct h as [lte'|lt].
-        + exact (tr (inl (m; (leq_refl _, (lte', lte))))).
+        + exact (tr (inr (lte', lte))).
         + (* The next interval is the right half, whose lower endpoint is [c m]. *)
-          apply tr, inr.
+          apply tr, inl.
           assert (d0 := bisect_weight_0 f _ _ lt).
           rewrite (bisect_lower_0 dec a b m d0), (bisect_upper_0 dec a b m d0).
           exact (transitivity lt (fst (flip_pos_negate _) halfpos), pos).
+    Qed.
+
+    (** The invariant of the bisection: at every stage, either [f] is close to [0] at one of the midpoints so far, or [f] is still negative at the lower endpoint and positive at the upper endpoint. *)
+    Lemma bisect_invariant (m : nat)
+      : hor {j : nat & prod (j < m)%nat (- ' (' e) < f (c j) < ' (' e))}
+          (prod (f (z m) < 0) (0 < f (w m))).
+    Proof.
+      refine (Trunc_functor (-1) (functor_sum _ idmap)
+                (O_walk (Tr (-1)) _ _ m (fun j _ => bisect_step_signs j) (fa, fb))).
+      intros [j [ltj [_ close]]]; exact (j; (ltj, close)).
     Qed.
 
     Context (cont : forall y, a ≤ y ≤ b -> IsContinuousAt Q F f y).

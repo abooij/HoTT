@@ -2,7 +2,7 @@
 
 (** We work on closed intervals [[a, b]] of an Archimedean ordered field, with the distance [|x - y|]. A uniformly continuous function on [[a, b]] has a supremum, computed as the limit of its maxima at finitely many equidistant points, with an explicit modulus of Cauchy convergence. The maps [[a, b] -> [c, d]] with a modulus of uniform continuity form a pseudometric space with the supremum distance, and those which additionally lift to locators form a Cauchy complete pseudometric space, in which maps at distance zero have equal underlying maps. *)
 
-From HoTT Require Import Basics Types.Sigma Truncations.Core.
+From HoTT Require Import Basics Types.Sigma Truncations.Core Misc.BoundedSearch.
 From HoTT.Spaces Require Import Nat.Core.
 From HoTT.Classes Require Import
   interfaces.abstract_algebra
@@ -222,27 +222,16 @@ Section function_space.
 
   (** ** Finding a nearby point *)
 
-  (** If consecutive points [p k] are less than [d] apart, then any [z] between [p 0] and [p N] merely lies within [d] above one of them. Comparing [z] with each point in turn uses cotransitivity, so we only get mere existence. *)
+  (** If consecutive points [p k] are less than [d] apart, then any [z] between [p 0] and [p N] merely lies within [d] above one of them. We walk up the points, comparing [z] with each in turn by cotransitivity, so we only get mere existence. *)
   Lemma merely_near_point (p : nat -> F) (N : nat) (d z : F)
     (step : forall k, (k < N)%nat -> p (S k) < p k + d) (d0 : 0 < d)
     (lo : p 0 ≤ z) (hi : z ≤ p N)
-    : merely {k : nat & prod (prod (k <= N)%nat (p k ≤ z)) (z < p k + d)}.
+    : merely {k : nat & prod (k <= N)%nat (prod (p k ≤ z) (z < p k + d))}.
   Proof.
-    assert (scan : forall j, (j <= N)%nat
-                   -> merely ({k : nat & prod (prod (k <= N)%nat (p k ≤ z)) (z < p k + d)}
-                              + (p j ≤ z))).
-    { intro j; induction j as [|j IH]; intro lejN.
-      - exact (tr (inr lo)).
-      - assert (h := IH (leq_succ_l lejN)); strip_truncations.
-        destruct h as [found|lez]; [exact (tr (inl found))|].
-        assert (c := cotransitive (step j lejN) z); strip_truncations; apply tr.
-        destruct c as [lt|lt].
-        + exact (inr (lt_le _ _ lt)).
-        + exact (inl (j; (leq_succ_l lejN, lez, lt))). }
-    assert (h := scan N (leq_refl N)); strip_truncations; apply tr.
-    destruct h as [found|lez]; [exact found|].
-    exists N; refine (leq_refl N, lez, _).
-    exact (le_lt_trans _ _ _ hi (fst (pos_plus_lt_compat_r _ _) d0)).
+    refine (O_walk_stop (Tr (-1)) (fun k => p k ≤ z) (fun k => z < p k + d) N _ lo _).
+    - intros k lt _; refine (Trunc_functor (-1) _ (cotransitive (step k lt) z)).
+      intros [l|l]; [exact (inl (lt_le _ _ l))|exact (inr l)].
+    - intros _; exact (le_lt_trans _ _ _ hi (fst (pos_plus_lt_compat_r _ _) d0)).
   Qed.
 
   (** ** Finite maxima *)
@@ -319,7 +308,7 @@ Section function_space.
       assert (hi : z.1 ≤ (p (S n)).1) by (unfold p; rewrite grid_point_last; exact (snd z.2)).
       assert (c := merely_near_point (fun k => (p k).1) (S n) _ z.1 step
                      (pos_rationals_to_field_qpos Q (w e)) lo hi).
-      strip_truncations; destruct c as [k [[lekn lez] ltz]].
+      strip_truncations; destruct c as [k [lekn [lez ltz]]].
       assert (cz : closeI (w e) z (p k)).
       { unfold metric_close, interval_dist.
         rewrite (abs_of_nonneg _ (snd (flip_nonneg_minus _ _) lez)).
