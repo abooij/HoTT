@@ -33,40 +33,29 @@ Section located.
   Context (O : ReflectiveSubuniverse) (L U : A -> Type)
     (loc : forall q r, q < r -> O (sum (L q) (U r))).
 
-  (** Walking up from [L q0] in steps of [d], we either find [q] with [L q] and [U (q + d + d)], or stay in [L]. *)
-  Definition located_walk (d : A) (dpos : 0 < d) (q0 : A) (Lq0 : L q0) (n : nat)
-    : O (sum {q : A & prod (L q) (U (q + d + d))} (L (q0 + nA n * d))).
-  Proof.
-    induction n as [|n IH].
-    - apply to; right.
-      rewrite (preserves_0 (f:=nA)), mult_0_l, plus_0_r; exact Lq0.
-    - revert IH; apply O_rec; intros [found|Lq]; [exact (to O _ (inl found))|].
-      set (q := q0 + nA n * d).
-      assert (step : q0 + nA (S n) * d = q + d).
-      { unfold q; rewrite nat_to_semiring_succ, plus_mult_distr_r, mult_1_l.
-        rewrite (plus_comm d), plus_assoc; reflexivity. }
-      refine (O_functor O _ (loc (q + d) (q + d + d) (fst (pos_plus_lt_compat_r _ _) dpos))).
-      intros [Lqd|Uqdd].
-      + right; rewrite step; exact Lqd.
-      + left; exact (q; (Lq, Uqdd)).
-  Defined.
-
-  (** If moreover [L] lies below [U], then from [L q0] and [U r0] we find [q] with [L q] and [U (q + d + d)]: the walk passes [r0] after finitely many steps. *)
+  (** If moreover [L] lies below [U], then from [L q0] and [U r0] we find [q] with [L q] and [U (q + d + d)]. We walk up from [q0] in steps of [d], using locatedness at [q + d < q + d + d] at each step, and the walk stops before it passes [r0]. *)
   Definition located_close (trans : forall q r, L q -> U r -> q < r)
     (d : A) (dpos : 0 < d) (q0 r0 : A) (Lq0 : L q0) (Ur0 : U r0)
     : O {q : A & prod (L q) (U (q + d + d))}.
   Proof.
     assert (PropHolds (0 < d)) by exact dpos.
     destruct (round_up_strict A ((r0 - q0) / d)) as [n ltn].
-    refine (O_functor O _ (located_walk d dpos q0 Lq0 n)).
-    intros [found|Lq]; [exact found|].
-    apply Empty_rec, (irreflexivity (<) r0).
-    transitivity (q0 + nA n * d).
-    - rewrite plus_comm; apply flip_lt_minus_l.
+    set (p k := q0 + nA k * d).
+    assert (p0 : p 0%nat = q0).
+    { unfold p; rewrite (preserves_0 (f:=nA)), mult_0_l, plus_0_r; reflexivity. }
+    assert (pS : forall k, p (S k) = p k + d).
+    { intro k; unfold p; rewrite nat_to_semiring_succ, plus_mult_distr_r, mult_1_l.
+      rewrite (plus_comm d), plus_assoc; reflexivity. }
+    refine (O_functor O (fun k => (p k.1; snd k.2))
+              (O_walk_stop O (L o p) (fun k => U (p k + d + d)) n _ (transport L p0^ Lq0) _)).
+    - intros k _ _; cbn; rewrite pS.
+      exact (loc _ _ (fst (pos_plus_lt_compat_r _ _) dpos)).
+    - intros Lp; apply Empty_rec, (irreflexivity (<) r0).
+      transitivity (p n); [|exact (trans _ _ Lp Ur0)].
+      unfold p; rewrite plus_comm; apply flip_lt_minus_l.
       rewrite <- (mult_1_r (r0 - q0)), <- (dec_recip_inverse d (lt_ne_flip _ _ dpos)),
         (mult_comm d), mult_assoc.
       apply (strictly_order_preserving (.* d)); exact ltn.
-    - exact (trans _ _ Lq Ur0).
   Defined.
 End located.
 
