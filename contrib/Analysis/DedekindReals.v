@@ -1647,44 +1647,11 @@ Section complete.
       exact (strictly_order_preserving ([' e] +) _ _ (snd (lt_rational_dedekind_r Q b (x n)) ub)).
     Qed.
 
-    (** The limit: [q < l] when [q + e + d < x (M e)] for some [e] and [d], and dually. *)
-    Local Definition limit_lower (q : Q) : HProp
-      := Build_HProp (hexists (fun e : Qpos Q => hexists (fun d : Qpos Q =>
-                       lower_cut Q (x (M e)) (q + ' e + ' d)))).
-    Local Definition limit_upper (r : Q) : HProp
-      := Build_HProp (hexists (fun e : Qpos Q => hexists (fun d : Qpos Q =>
-                       upper_cut Q (x (M e)) (r - ' e - ' d)))).
-
-    Local Lemma plus_minus_pos (q : Q) (e d : Qpos Q) : q - ' e - ' d + ' e + ' d = q.
-    Proof.
-      rewrite <- !plus_assoc, (plus_comm (' e) (' d)), (plus_assoc (- ' d)), plus_negate_l, plus_0_l.
-      rewrite plus_negate_l; apply plus_0_r.
-    Qed.
-
-    Local Lemma plus_plus_minus (q : Q) (e d : Qpos Q) : q + ' e + ' d - ' e - ' d = q.
-    Proof.
-      rewrite <- !plus_assoc, (plus_assoc (' d) (- ' e)), (plus_comm (' d) (- ' e)).
-      rewrite <- (plus_assoc (- ' e)), !plus_negate_r, plus_0_r, plus_negate_r; apply plus_0_r.
-    Qed.
-
-    Local Lemma plus_half_shift (q : Q) (e d : Qpos Q)
-      : q + ' (d / 2) + ' e + ' (d / 2) = q + ' e + ' d.
-    Proof.
-      rhs exact (ap (fun z => q + ' e + ' z) (pos_split2 d)).
-      change (q + ' (d / 2) + ' e + ' (d / 2) = q + ' e + (' (d / 2) + ' (d / 2))).
-      rewrite <- (plus_assoc q (' (d / 2)) (' e)), (plus_comm (' (d / 2)) (' e)), plus_assoc.
-      apply (plus_assoc _ (' (d / 2)) (' (d / 2)))^.
-    Qed.
-
-    Local Lemma minus_half_shift (r : Q) (e d : Qpos Q)
-      : r - ' (d / 2) - ' e - ' (d / 2) = r - ' e - ' d.
-    Proof.
-      rhs exact (ap (fun z => r - ' e - ' z) (pos_split2 d)).
-      change (r - ' (d / 2) - ' e - ' (d / 2) = r - ' e - (' (d / 2) + ' (d / 2))).
-      rewrite negate_plus_distr.
-      rewrite <- (plus_assoc r (- ' (d / 2)) (- ' e)), (plus_comm (- ' (d / 2)) (- ' e)), plus_assoc.
-      apply (plus_assoc _ (- ' (d / 2)) (- ' (d / 2)))^.
-    Qed.
+    (** The limit is the rounding of [q + e < x (M e)] and [x (M e) < r - e]: [q < l] when [q + e + d < x (M e)] for some [e] and [d], and dually. *)
+    Local Definition limit_below (q : Q) : Type
+      := hexists (fun e : Qpos Q => lower_cut Q (x (M e)) (q + ' e)).
+    Local Definition limit_above (r : Q) : Type
+      := hexists (fun e : Qpos Q => upper_cut Q (x (M e)) (r - ' e)).
 
     Local Lemma lt_plus_pos (q : Q) (e : Qpos Q) : q < q + ' e.
     Proof.
@@ -1696,89 +1663,59 @@ Section complete.
       exact (fst (pos_minus_lt_compat_r q (' e)) (is_pos e)).
     Qed.
 
-    (** Two consequences of [modulus_cut_lt] that give transitivity of the limit cut. *)
-    Local Lemma limit_transitive_aux (q s : Q) (e d : Qpos Q) : q + ' e + ' d < s + ' e -> q < s.
+    Local Lemma plus_minus_pos (q : Q) (e : Qpos Q) : q + ' e - ' e = q.
     Proof.
-      intros l.
-      rewrite <- (plus_assoc q), (plus_comm (' e)), plus_assoc in l.
-      apply (strictly_order_reflecting (+ ' e)) in l.
-      exact (transitivity (lt_plus_pos q d) l).
+      rewrite <- plus_assoc, plus_negate_r; apply plus_0_r.
     Qed.
 
-    Local Lemma limit_transitive_aux' (q r : Q) (e d e' d' : Qpos Q)
-      : q + ' e + ' d < r - ' e' - ' d' + ' e' -> q < r.
+    Local Lemma minus_plus_pos (q : Q) (e : Qpos Q) : q - ' e + ' e = q.
     Proof.
-      intros l.
-      rewrite <- (plus_assoc (r - ' e')), (plus_comm (- ' d')), plus_assoc in l.
-      rewrite <- (plus_assoc r), plus_negate_l, plus_0_r in l.
-      lhs' exact (lt_plus_pos q e).
-      lhs' exact (lt_plus_pos _ d).
-      lhs' exact l.
-      exact (minus_pos_lt r d').
+      rewrite <- plus_assoc, plus_negate_l; apply plus_0_r.
     Qed.
 
-    Local Lemma limit_located_aux (q r : Q) (e : Qpos Q)
-      : ' e + ' e + ' e + ' e < r - q -> q + ' e + ' e < r - ' e - ' e.
+    Local Lemma limit_below_above (q r : Q) : limit_below q -> limit_above r -> q <= r.
     Proof.
-      intros l.
-      apply (snd (flip_lt_minus_r _ _ _)), (snd (flip_lt_minus_r _ _ _)).
-      apply flip_lt_minus_r in l; rewrite plus_comm, !plus_assoc in l; exact l.
+      intros p p'; strip_truncations; destruct p as [e p], p' as [e' p']; apply lt_le.
+      destruct (leq_dichotomy (M e) (M e')) as [lM|lM].
+      - assert (l := modulus_cut_lt e _ _ _ _ (leq_refl _) lM p p').
+        apply (strictly_order_reflecting (+ ' e)) in l.
+        exact (transitivity l (minus_pos_lt r e')).
+      - assert (l := modulus_cut_lt e' _ _ _ _ (leq_lt lM) (leq_refl _) p p').
+        rewrite minus_plus_pos in l; exact (transitivity (lt_plus_pos q e) l).
     Qed.
 
-    Lemma isdedekindcut_limit : IsDedekindCut Q limit_lower limit_upper.
+    (** For locatedness, we use the locatedness of [x (M e)] for [e] a quarter of [r - q]. *)
+    Local Lemma limit_located (q r : Q) : q < r -> hor (limit_below q) (limit_above r).
     Proof.
-      split.
-      - assert (a := cut_lower_inhabited (isdedekindcut Q (x (M 1)))); strip_truncations.
-        destruct a as [a la]; apply tr; exists (a - ' 1 - ' 1); apply tr; exists 1; apply tr; exists 1.
-        rewrite plus_minus_pos; exact la.
-      - assert (b := cut_upper_inhabited (isdedekindcut Q (x (M 1)))); strip_truncations.
-        destruct b as [b ub]; apply tr; exists (b + ' 1 + ' 1); apply tr; exists 1; apply tr; exists 1.
-        rewrite plus_plus_minus; exact ub.
-      - intros q; split.
-        + intros p; strip_truncations; destruct p as [e p]; strip_truncations; destruct p as [d p].
-          apply tr; exists (q + ' (d / 2)); split; [apply lt_plus_pos|].
-          apply tr; exists e; apply tr; exists (d / 2).
-          rewrite plus_half_shift; exact p.
-        + intros p; strip_truncations; destruct p as [q' [l p]]; strip_truncations.
-          destruct p as [e p]; strip_truncations; destruct p as [d p].
-          apply tr; exists e; apply tr; exists d.
-          refine (lower_cut_lt Q _ _ _ _ p).
-          apply (strictly_order_preserving (+ ' d)), (strictly_order_preserving (+ ' e)), l.
-      - intros r; split.
-        + intros p; strip_truncations; destruct p as [e p]; strip_truncations; destruct p as [d p].
-          apply tr; exists (r - ' (d / 2)); split; [apply minus_pos_lt|].
-          apply tr; exists e; apply tr; exists (d / 2).
-          rewrite minus_half_shift; exact p.
-        + intros p; strip_truncations; destruct p as [r' [l p]]; strip_truncations.
-          destruct p as [e p]; strip_truncations; destruct p as [d p].
-          apply tr; exists e; apply tr; exists d.
-          refine (upper_cut_lt Q _ _ _ _ p).
-          apply (strictly_order_preserving (+ - ' d)), (strictly_order_preserving (+ - ' e)), l.
-      - intros q r p p'; strip_truncations.
-        destruct p as [e p], p' as [e' p']; strip_truncations.
-        destruct p as [d p], p' as [d' p'].
-        destruct (leq_dichotomy (M e) (M e')) as [lM|lM].
-        + rhs_V' exact (minus_pos_lt r e').
-          rhs_V' exact (minus_pos_lt _ d').
-          exact (limit_transitive_aux q _ e d (modulus_cut_lt e _ _ _ _ (leq_refl _) lM p p')).
-        + exact (limit_transitive_aux' q r e d e' d'
-                   (modulus_cut_lt e' _ _ _ _ (leq_lt lM) (leq_refl _) p p')).
-      - intros q r l.
-        pose (k := Qpos_diff q r l); pose (e := k / 2 / 2 / 2).
-        assert (le : ' e + ' e + ' e + ' e < r - q).
-        { assert (h1 : ' e + ' e = ' (k / 2 / 2))
-            by exact (ap (cast (Qpos Q) Q) (pos_split2 (k / 2 / 2)))^.
-          assert (h2 : ' (k / 2 / 2) + ' (k / 2 / 2) = ' (k / 2))
-            by exact (ap (cast (Qpos Q) Q) (pos_split2 (k / 2)))^.
-          rewrite <- (plus_assoc (' e + ' e)), h1, h2.
-          change (' (k / 2) < ' k).
-          apply (transport (fun z => ' (k / 2) < ' z) (pos_split2 k)^), lt_plus_pos. }
-        assert (c := cut_located (isdedekindcut Q (x (M e))) _ _ (limit_located_aux q r e le)).
-        strip_truncations; destruct c as [c|c]; apply tr; [left|right];
-          apply tr; exists e; apply tr; exists e; exact c.
+      intros ltqr; set (d := Qpos_diff q r ltqr); set (f := d / 2 / 2).
+      assert (p : r - ' f = q + ' f + ' f + ' f).
+      { rewrite (plus_conjugate_alt r q); change (q + ' d - ' f = q + ' f + ' f + ' f).
+        rewrite (ap (cast (Qpos Q) Q) (pos_split2 d)); change (q + (' (d / 2) + ' (d / 2)) - ' f = q + ' f + ' f + ' f).
+        rewrite (ap (cast (Qpos Q) Q) (pos_split2 (d / 2))).
+        change (q + (' f + ' f + (' f + ' f)) - ' f = q + ' f + ' f + ' f).
+        rewrite !plus_assoc, <- (plus_assoc (q + ' f + ' f + ' f)), plus_negate_r; apply plus_0_r. }
+      assert (lt : q + ' f < r - ' f).
+      { rewrite p; exact (transitivity (lt_plus_pos _ f) (lt_plus_pos _ f)). }
+      refine (Trunc_functor (-1) _ (cut_located (isdedekindcut Q (x (M f))) _ _ lt)).
+      intros [l|u]; [left; exact (tr (f; l))|right; exact (tr (f; u))].
     Qed.
 
-    Definition limit_dedekind : R := Build_DedekindReals Q limit_lower limit_upper isdedekindcut_limit.
+    Local Lemma limit_below_inhabited : hexists limit_below.
+    Proof.
+      refine (Trunc_functor (-1) _ (cut_lower_inhabited (isdedekindcut Q (x (M 1))))).
+      intros [a la]; exists (a - ' 1); apply tr; exists 1; rewrite minus_plus_pos; exact la.
+    Qed.
+
+    Local Lemma limit_above_inhabited : hexists limit_above.
+    Proof.
+      refine (Trunc_functor (-1) _ (cut_upper_inhabited (isdedekindcut Q (x (M 1))))).
+      intros [b ub]; exists (b + ' 1); apply tr; exists 1; rewrite plus_minus_pos; exact ub.
+    Qed.
+
+    Definition limit_dedekind : R
+      := Build_DedekindReals Q _ _
+           (isdedekindcut_rounded Q limit_below limit_above limit_below_inhabited
+              limit_above_inhabited limit_below_above limit_located).
 
     Local Lemma rational_dedekind_minus (r h : Q) : [r - h] = [r] - [h].
     Proof.
@@ -1803,16 +1740,14 @@ Section complete.
       apply (fst (lt_rational_dedekind_l Q r _)) in lr'.
       rewrite plus_comm in lr; apply flip_lt_minus_r in lr.
       rewrite <- rational_dedekind_minus in lr; apply (fst (lt_rational_dedekind_r Q _ _)) in lr.
-      revert lr'; apply (Trunc_rec (n:=-1)); intros [e' p]; revert p.
-      apply (Trunc_rec (n:=-1)); intros [d' p].
+      revert lr'; apply (Trunc_rec (n:=-1)); intros [r' [ltr p]]; revert p.
+      apply (Trunc_rec (n:=-1)); intros [e' p].
       destruct (leq_dichotomy (M (e / 2)) (M e')) as [lM|lM].
       - refine (not_lt_flip_dedekind _ _ _ (modulus_cut_lt (e / 2) _ _ _ _ lM ln p lr)).
-        rewrite <- plus_assoc, plus_negate_l, plus_0_r.
-        exact (transitivity (lt_plus_pos r e') (lt_plus_pos _ d')).
+        rewrite minus_plus_pos; exact (transitivity ltr (lt_plus_pos r' e')).
       - refine (not_lt_flip_dedekind _ _ _
                   (modulus_cut_lt e' _ _ _ _ (leq_refl _) (leq_trans (leq_lt lM) ln) p lr)).
-        rhs_V' exact (lt_plus_pos _ d').
-        apply (strictly_order_preserving (+ ' e')), minus_pos_lt.
+        apply (strictly_order_preserving (+ ' e')); exact (transitivity (minus_pos_lt r _) ltr).
     Qed.
 
     (** Beyond [M (e / 2)], the terms are at most [e / 2] below the limit. *)
@@ -1827,19 +1762,17 @@ Section complete.
       apply (fst (lt_rational_dedekind_l Q r _)) in lr'.
       rewrite plus_comm in lr; apply flip_lt_minus_r in lr.
       rewrite <- rational_dedekind_minus in lr; apply (fst (lt_rational_dedekind_r Q _ _)) in lr.
-      revert lr; apply (Trunc_rec (n:=-1)); intros [e' p]; revert p.
-      apply (Trunc_rec (n:=-1)); intros [d' p].
+      revert lr; apply (Trunc_rec (n:=-1)); intros [r' [ltr p]]; revert p.
+      apply (Trunc_rec (n:=-1)); intros [e' p].
       destruct (leq_dichotomy (M (e / 2)) (M e')) as [lM|lM].
       - refine (not_lt_flip_dedekind _ _ _ (modulus_cut_lt (e / 2) _ _ _ _ ln lM lr' p)).
         apply (lt_le_trans _ (r - ' (e / 2) + ' (e / 2))).
         + apply (strictly_order_preserving (+ ' (e / 2))).
-          exact (transitivity (minus_pos_lt _ d') (minus_pos_lt _ e')).
-        + rewrite <- plus_assoc, plus_negate_l, plus_0_r; apply reflexivity.
+          exact (transitivity (minus_pos_lt r' e') ltr).
+        + rewrite minus_plus_pos; reflexivity.
       - refine (not_lt_flip_dedekind _ _ _
                   (modulus_cut_lt e' _ _ _ _ (leq_trans (leq_lt lM) ln) (leq_refl _) lr' p)).
-        apply (lt_le_trans _ (r - ' (e / 2) - ' e' + ' e')).
-        + apply (strictly_order_preserving (+ ' e')), minus_pos_lt.
-        + rewrite <- plus_assoc, plus_negate_l, plus_0_r; apply lt_le, minus_pos_lt.
+        rewrite minus_plus_pos; exact (transitivity ltr (minus_pos_lt r _)).
     Qed.
 
     Lemma islimit_limit_dedekind : IsLimit Q R x limit_dedekind.
