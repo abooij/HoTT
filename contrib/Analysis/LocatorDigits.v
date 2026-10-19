@@ -2,7 +2,8 @@
 
 (** A real number with a locator can be written as an integer plus an infinite sum of signed digits, and conversely a real number with such a representation has a locator. We work in an arbitrary base [1 + d] with digits from [- d] to [d]; decimal signed digits are the case [d = 9]. Integers are taken from an arbitrary model [Z] of the interface [Integers], mapped into the rationals with [integers_to_ring], in the same way as the rationals [Q] are an arbitrary model of [Rationals]. A digit is an element of [Z] between [- d] and [d], and the infinite sum is the limit, in the sense of [IsLimit], of its partial sums in [Q]. *)
 
-From HoTT Require Import Basics Truncations.Core Modalities.ReflectiveSubuniverse.
+From HoTT Require Import Basics Truncations.Core Modalities.ReflectiveSubuniverse
+  Modalities.Identity Misc.BoundedSearch.
 From HoTT.Spaces Require Import Nat.Core.
 From HoTT.Classes Require Import
   interfaces.abstract_algebra
@@ -305,28 +306,26 @@ Section digits.
   Section scan.
     Context {x : F} (l : locator Q F x) (G : Z -> Q) (Ginc : forall j, G j < G (j + 1)).
 
-    (** Using a locator for [x] on consecutive points of an increasing grid [G], we find a point [b] with [G (b - 1) < x < G (b + 1)]. *)
+    (** Using a locator for [x] on consecutive points of an increasing grid [G], we find a point [b] with [G (b - 1) < x < G (b + 1)]: we walk up the points [a + k], comparing [x] with [G (a + k)] and [G (a + k + 1)]. *)
     Definition locator_scan (N : nat) (a : Z)
       (lta : ' G (a - 1) < x) (ltx : x < ' G (a + nZ N + 1))
       : {b : Z & prod (a ≤ b ≤ a + nZ N) (' G (b - 1) < x < ' G (b + 1))}.
     Proof.
-      revert a lta ltx; induction N as [|N IH]; intros a lta ltx.
-      - assert (p : a + nZ 0%nat = a) by exact (ap (a +) (preserves_0 (f:=nZ)) @ plus_0_r a).
-        rewrite p in ltx.
-        exists a; split; [split; [reflexivity|rewrite p; reflexivity]|exact (lta, ltx)].
-      - assert (pS : a + nZ (S N) = a + 1 + nZ N).
-        { rewrite <- plus_assoc; apply ap.
-          exact (preserves_plus (f:=nZ) 1%nat N @ ap (+ nZ N) preserves_1). }
-        destruct (l (G a) (G (a + 1)) (Ginc a)) as [ltGa|ltxG].
-        + destruct (IH (a + 1)) as [b [[le1 le2] bounds]].
-          * rewrite <- plus_assoc, plus_negate_r, plus_0_r; exact ltGa.
-          * rewrite <- pS; exact ltx.
-          * exists b; refine (_, bounds); split.
-            -- rhs_V' exact le1.
-               apply nonneg_plus_le_compat_r, le_0_1.
-            -- rewrite pS; exact le2.
-        + exists a; refine (_, (lta, ltxG)); split; [reflexivity|].
-          apply nonneg_plus_le_compat_r, nat_to_semiring_nonneg.
+      assert (shift : forall k, a + nZ k = a + nZ (S k) - 1).
+      { intro k; rewrite nat_to_semiring_succ, (plus_comm 1), plus_assoc, <- plus_assoc.
+        rewrite plus_negate_r, plus_0_r; reflexivity. }
+      assert (bounds : forall k, (k <= N)%nat -> a ≤ a + nZ k ≤ a + nZ N).
+      { intros k lek; split.
+        - apply nonneg_plus_le_compat_r, nat_to_semiring_nonneg.
+        - apply (order_preserving (a +)), nat_to_semiring_le, lek. }
+      destruct (O_walk_stop purely (fun k => ' G (a + nZ k - 1) < x) (fun k => x < ' G (a + nZ k + 1)) N
+                  (fun k _ _ => functor_sum (transport (fun i => ' G i < x) (shift k)) idmap
+                                  (l _ _ (Ginc (a + nZ k))))
+                  (transport (fun i => ' G (i - 1) < x) (ap (a +) preserves_0 @ plus_0_r a)^ lta)
+                  (fun _ => ltx)
+                : {k : nat & _})
+        as [k [lek LU]].
+      exact (a + nZ k; (bounds k lek, LU)).
     Defined.
   End scan.
 

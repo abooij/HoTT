@@ -4,7 +4,7 @@
 
 Require Import Basics.Overture Basics.Decidable Basics.Trunc Basics.Tactics.
 Require Import Types.Sigma Types.Prod.
-Require Import Truncations.Core.
+Require Import Truncations.Core Modalities.ReflectiveSubuniverse.
 Require Import Spaces.Nat.Core.
 
 Section bounded_search.
@@ -116,3 +116,36 @@ Section bounded_search_alt_type.
   Defined.
 
 End bounded_search_alt_type.
+
+(** ** Walks along the natural numbers in a reflective subuniverse *)
+
+Section walk.
+  Context (O : ReflectiveSubuniverse).
+
+  Local Open Scope nat_scope.
+  Local Open Scope type_scope.
+
+  (** If at each step [k < n] we can, in [O], go from [L k] either on to [L (S k)] or stop with [U k], then a walk of [n] steps from [L 0] reaches, in [O], either a stop [L k * U k] at some [k < n], or [L n]. For the identity modality this is a search, and for the propositional truncation an induction proving a property step by step, without choosing at each step. *)
+  Definition O_walk (L U : nat -> Type) (n : nat)
+    (step : forall k, k < n -> L k -> O (L k.+1 + U k)) (L0 : L 0)
+    : O ({k : nat & (k < n) * (L k * U k)} + L n).
+  Proof.
+    induction n as [|n IH]; [exact (to O _ (inr L0))|].
+    refine (O_rec _ (IH (fun k lt => step k (leq_succ_r lt)))).
+    intros [[k [lt LU]]|Ln].
+    - exact (to O _ (inl (k; (leq_succ_r lt, LU)))).
+    - refine (O_functor O _ (step n (leq_refl _) Ln)).
+      intros [Ln'|Un]; [exact (inr Ln')|exact (inl (n; (leq_refl _, (Ln, Un))))].
+  Defined.
+
+  (** If moreover [L n] implies [U n], then the walk stops, in [O], at some [k <= n]. *)
+  Definition O_walk_stop (L U : nat -> Type) (n : nat)
+    (step : forall k, k < n -> L k -> O (L k.+1 + U k)) (L0 : L 0) (last : L n -> U n)
+    : O {k : nat & (k <= n) * (L k * U k)}.
+  Proof.
+    refine (O_functor O _ (O_walk L U n step L0)).
+    intros [[k [lt LU]]|Ln].
+    - exact (k; (leq_lt lt, LU)).
+    - exact (n; (leq_refl n, (Ln, last Ln))).
+  Defined.
+End walk.
