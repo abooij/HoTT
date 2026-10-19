@@ -577,57 +577,6 @@ Section locator.
             (l : locator x)
             (m : locator y).
 
-    Definition locator_plus : locator (x + y).
-    Proof.
-      intros q r ltqr.
-      set (epsilon := (Qpos_diff q r ltqr) / 2).
-      assert (q+'epsilon=r-'epsilon)
-        by (rewrite path_avg_split_diff_l, path_avg_split_diff_r; reflexivity).
-      destruct (tight_bound m epsilon) as [u [ltuy ltyuepsilon]].
-      set (s := q-u).
-      assert (qsltx : 'q-'s<y).
-      {
-        unfold s.
-        rewrite (preserves_plus q (-u)).
-        rewrite negate_plus_distr.
-        rewrite (associativity ('q) (-'q) (-'(-u))).
-        rewrite plus_negate_r.
-        rewrite plus_0_l.
-        rewrite (preserves_negate u).
-        rewrite negate_involutive.
-        assumption.
-      }
-      assert (sltseps : s<s+' epsilon)
-        by apply ltQposQ.
-      destruct (l s (s+' epsilon) sltseps) as [ltsx|ltxseps].
-      - apply inl. apply char_plus_left. apply tr; exists s; split; try assumption.
-        rewrite preserves_minus; assumption.
-      - apply inr. apply char_plus_right. apply tr.
-        set (t := s + ' epsilon); exists t.
-        split; try assumption.
-        assert (r-(q-u+(r-q)/2)=u+'epsilon) as ->.
-        {
-          change ((r - q) / 2) with ('epsilon).
-          rewrite negate_plus_distr.
-          rewrite <- negate_swap_l.
-          rewrite (plus_comm (-q) u).
-          rewrite (plus_assoc r (u-q) (-'epsilon)).
-          rewrite (plus_assoc r u (-q)).
-          rewrite (plus_comm r u).
-          rewrite <- (plus_assoc u r (-q)).
-          rewrite <- (plus_assoc u (r-q) (-'epsilon)).
-          rewrite (plus_comm r (-q)).
-          rewrite <- (plus_assoc (-q) r (-'epsilon)).
-          rewrite path_avg_split_diff_r.
-          rewrite <- path_avg_split_diff_l.
-          rewrite (plus_assoc (-q) q ((r-q)/2)).
-          rewrite (plus_negate_l q).
-          rewrite (plus_0_l _).
-          reflexivity.
-        }
-        assumption.
-    Qed.
-
     Lemma locator_meet : locator (meet x y).
     Proof.
       intros q r ltqr.
@@ -700,19 +649,7 @@ Section locator.
       exact (fst (flip_lt_minus_r _ _ _) lt).
   Defined.
 
-  (** A real number that has rational approximations of any precision has a locator. *)
-  Definition locator_from_approx {z : F}
-    (approx : forall e : Qpos Q, {p : Q | ' (p - ' e) < z < ' (p + ' e)})
-    : locator z.
-  Proof.
-    apply locator_close; intros e.
-    destruct (approx e) as [p [lo hi]].
-    exists (' p); split; [apply locator_left|].
-    rewrite <- (preserves_minus (f:=cast Q F)), <- (preserves_plus (f:=cast Q F)).
-    exact (lo, hi).
-  Defined.
-
-  Section times.
+  Section binary.
 
     (** For positive rationals [Z] and [e], a rational [0 < d < 1] with [d (2 Z + 1) < e]: we take [d = e / (e + 2 Z + 1)]. *)
     Local Definition mult_precision (Z : Q) (Zpos : 0 < Z) (e : Qpos Q)
@@ -748,67 +685,98 @@ Section locator.
       - apply flip_lt_minus_l; rewrite (commutativity d); assumption.
     Qed.
 
-    (** If moreover [- Z < v < Z] and [d < 1], then [- (Z + 1) < u < Z + 1]. *)
-    Local Lemma lt_bound_tight_succ {u v d Z : F} (d1 : d < 1) (ltuv : u < v) (ltvu : v < u + d)
+    (** If [v] is within [d < 1] of [u] and [- Z < v < Z], then [- (Z + 1) < u < Z + 1]. *)
+    Local Lemma lt_close_succ {u v d Z : F} (d1 : d < 1) (close : - d < v - u < d)
       (ltZv : - Z < v < Z)
       : - (Z + 1) < u < Z + 1.
     Proof.
       split.
-      - rewrite negate_plus_distr.
-        rhs_V' exact (snd (flip_lt_minus_l _ _ _) ltvu).
-        apply plus_lt_compat; [apply ltZv|].
-        apply (snd (flip_lt_negate _ _)); assumption.
-      - refine (transitivity ltuv (transitivity (snd ltZv) _)).
-        apply (fst (pos_plus_lt_compat_r _ _)), lt_0_1.
+      - rewrite negate_plus_distr; apply flip_lt_minus_l.
+        lhs' exact (fst ltZv).
+        rewrite plus_comm; apply flip_lt_minus_l.
+        exact (transitivity (snd close) d1).
+      - assert (ltud : u - v < d)
+          by (rewrite negate_swap_r; exact (flip_lt_negate_l _ _ (fst close))).
+        lhs' exact (fst (flip_lt_minus_l _ _ _) ltud).
+        rewrite (plus_comm Z); exact (plus_lt_compat _ _ _ _ d1 (snd ltZv)).
     Qed.
 
-    Context {x y : F}
-            (l : locator x)
-            (m : locator y).
+    (** A modulus of local uniform continuity for a binary operation [f]: for every bound [B] and precision [e], a [d] such that [f u v] is within [e] of [f u' v'] whenever [u] and [v] lie strictly between [- B] and [B], and [u'] and [v'] are within [d] of them. *)
+    Definition BinaryModulus (f : F -> F -> F)
+      := forall B e : Qpos Q, {d : Qpos Q & forall u v u' v' : F,
+           - ' (' B) < u < ' (' B) -> - ' (' B) < v < ' (' B) ->
+           - ' (' d) < u - u' < ' (' d) -> - ' (' d) < v - v' < ' (' d) ->
+           - ' (' e) < f u v - f u' v' < ' (' e)}.
 
-    (** If [x] and [y] have locators, then so does [x * y]. *)
-    Definition locator_times : locator (x * y).
+    (** If a binary operation [f] has a modulus and its values at rationals have locators, then [f x y] has a locator for [x] and [y] with locators: we approximate it by [f a c], for rational approximations [a] and [c] of [x] and [y]. *)
+    Definition locator_binary (f : F -> F -> F) (fmod : BinaryModulus f)
+      (frat : forall a c : Q, locator (f (' a) (' c)))
+      {x y : F} (l : locator x) (m : locator y)
+      : locator (f x y).
     Proof.
-      (* The absolute values of [x] and [y], and hence their maximum, have locators. This gives a rational bound [Z]. *)
       destruct (qpos_upper_bound (locator_join (locator_join l (locator_minus l))
                                                (locator_join m (locator_minus m))))
-        as [[Z Zpos] ltJZ].
-      destruct (between_join_negate x y (' Z) ltJZ) as [ltZx ltZy].
-      apply locator_from_approx; intros e.
-      (* We approximate [x] and [y] up to [d], so that [x y] is approximated up to [Z d + d (Z + 1) < e]. *)
-      destruct (mult_precision Z Zpos e) as [d [[dpos ltd1] ltdZe]].
-      destruct (tight_bound l (mkQpos d dpos)) as [a [ltax ltxa]].
-      destruct (tight_bound m (mkQpos d dpos)) as [c [ltcy ltyc]].
-      exists (a * c).
+        as [B ltB].
+      destruct (between_join_negate x y _ ltB) as [ltBx ltBy].
+      apply locator_close; intros e.
+      destruct (fmod B e) as [d fd].
+      destruct (tight_bound l d) as [a [ltax ltxa]], (tight_bound m d) as [c [ltcy ltyc]].
       rewrite (preserves_plus (f:=cast Q F)) in ltxa, ltyc.
-      change (' (mkQpos d dpos)) with d in ltxa, ltyc.
-      assert (dpos' : (0 : F) < ' d).
-      { rewrite <- (preserves_0 (f:=cast Q F)); apply (strictly_order_preserving _), dpos. }
-      assert (ltd1' : ' d < (1 : F)).
-      { rewrite <- (preserves_1 (f:=cast Q F)); apply (strictly_order_preserving _), ltd1. }
-      destruct (mult_minus_mult_lt_bound x y (' a) (' c) (' Z) (' Z + 1) (' d)
-                  ltZx (lt_bound_tight_succ ltd1' ltcy ltyc ltZy)
-                  (lt_bound_tight dpos' ltax ltxa) (lt_bound_tight dpos' ltcy ltyc))
+      assert (dpos : 0 < ' (' d)).
+      { rewrite <- (preserves_0 (f:=cast Q F)); apply (strictly_order_preserving _), d. }
+      destruct (fd x y _ _ ltBx ltBy (lt_bound_tight dpos ltax ltxa) (lt_bound_tight dpos ltcy ltyc))
         as [lo hi].
-      assert (ltbound : ' Z * ' d + ' d * (' Z + 1) < ' (' e)).
-      { assert (p : ' Z * ' d + ' d * (' Z + 1) = ' (d * (Z + Z + 1))).
-        { rewrite (preserves_mult (f:=cast Q F)), 2!(preserves_plus (f:=cast Q F)),
-            (preserves_1 (f:=cast Q F)).
-          rewrite (commutativity (' Z) (' d)), <- plus_mult_distr_l, plus_assoc.
-          reflexivity. }
-        rewrite p; apply (strictly_order_preserving _), ltdZe. }
-      rewrite (preserves_minus (f:=cast Q F) (a * c) (' e)),
-        (preserves_plus (f:=cast Q F) (a * c) (' e)), (preserves_mult (f:=cast Q F) a c).
-      split.
-      - rewrite (commutativity (' a * ' c)).
-        apply flip_lt_minus_r.
-        exact (transitivity (snd (flip_lt_negate _ _) ltbound) lo).
-      - rewrite (commutativity (' a * ' c)).
-        apply flip_lt_minus_l.
-        exact (transitivity hi ltbound).
+      exists (f (' a) (' c)); split; [exact (frat a c)|split].
+      - rewrite plus_comm; exact (fst (flip_lt_minus_r _ _ _) lo).
+      - rewrite plus_comm; exact (fst (flip_lt_minus_l _ _ _) hi).
     Defined.
 
-  End times.
+    Local Lemma plus_minus_plus (a b c d : F) : a + b - (c + d) = a - c + (b - d).
+    Proof.
+      rewrite negate_plus_distr, <- !plus_assoc; apply ap.
+      rewrite !plus_assoc; apply (ap (+ - d)), plus_comm.
+    Qed.
+
+    (** Addition varies by less than [e] when its arguments move by less than [e / 2]. *)
+    Definition binarymodulus_plus : BinaryModulus (+).
+    Proof.
+      intros B e; exists (e / 2); intros u v u' v' _ _ cu cv.
+      rewrite plus_minus_plus, (ap (fun z => ' (' z)) (pos_split2 e)).
+      rewrite (preserves_plus (f:=cast Q F)), negate_plus_distr.
+      split; apply plus_lt_compat; apply cu || apply cv.
+    Defined.
+
+    Definition locator_plus {x y : F} (l : locator x) (m : locator y) : locator (x + y)
+      := locator_binary (+) binarymodulus_plus
+           (fun a c => transport locator (preserves_plus a c) (locator_left (a + c))) l m.
+
+    (** Multiplication varies by less than [e] on [[- B, B]] when its arguments move by less than [d], for [d] as in [mult_precision]: then [x y] moves by less than [B d + d (B + 1) < e]. *)
+    Definition binarymodulus_mult : BinaryModulus (.*.).
+    Proof.
+      intros B e.
+      destruct (mult_precision (' B) (pos_is_pos B) e) as [d [[dpos ltd1] ltdBe]].
+      exists (mkQpos d dpos); intros u v u' v' ltBu ltBv cu cv.
+      assert (ltd1' : ' d < (1 : F)).
+      { rewrite <- (preserves_1 (f:=cast Q F)); apply (strictly_order_preserving _), ltd1. }
+      destruct (mult_minus_mult_lt_bound u v u' v' (' (' B)) (' (' B) + 1) (' d)
+                  ltBu (lt_close_succ ltd1' cv ltBv) cu cv)
+        as [lo hi].
+      assert (ltbound : ' (' B) * ' d + ' d * (' (' B) + 1) < ' (' e)).
+      { assert (p : ' (' B) * ' d + ' d * (' (' B) + 1) = ' (d * (' B + ' B + 1))).
+        { rewrite (preserves_mult (f:=cast Q F)), 2!(preserves_plus (f:=cast Q F)),
+            (preserves_1 (f:=cast Q F)).
+          rewrite (commutativity (' (' B)) (' d)), <- plus_mult_distr_l, plus_assoc.
+          reflexivity. }
+        rewrite p; apply (strictly_order_preserving _), ltdBe. }
+      exact (transitivity (snd (flip_lt_negate _ _) ltbound) lo, transitivity hi ltbound).
+    Defined.
+
+    (** If [x] and [y] have locators, then so does [x * y]. *)
+    Definition locator_times {x y : F} (l : locator x) (m : locator y) : locator (x * y)
+      := locator_binary (.*.) binarymodulus_mult
+           (fun a c => transport locator (preserves_mult a c) (locator_left (a * c))) l m.
+
+  End binary.
 
   Section limit.
 
