@@ -24,7 +24,8 @@ From HoTT.Classes Require Import
   orders.rationals.
 From HoTT.Analysis Require Import Locator.
 From HoTT_Contrib.Analysis Require Import
-  MetricSpace CauchyCompleteness BanachFixedPoint LiftsToLocators FunctionSpace Integral.
+  MetricSpace CauchyCompleteness BanachFixedPoint LiftsToLocators IntermediateValue FunctionSpace
+  Integral.
 
 Section picard_lindelof.
   Universe UQ.
@@ -67,10 +68,9 @@ Section picard_lindelof.
   Lemma interval_dist_le {a b : F} (s t : I a b) : dI s t ≤ b - a.
   Proof.
     apply abs_le.
-    - rewrite <- negate_swap_r; apply plus_le_compat; [exact (fst s.2)|].
-      exact (snd (flip_le_negate _ _) (snd t.2)).
-    - apply plus_le_compat; [exact (snd s.2)|].
-      exact (snd (flip_le_negate _ _) (fst t.2)).
+    - rewrite (negate_swap_r s.1 t.1).
+      exact (snd (flip_le_negate _ _) (interval_minus_le a b _ _ t.2 s.2)).
+    - exact (interval_minus_le a b _ _ s.2 t.2).
   Qed.
 
   Local Lemma abs_mult_nonneg_le (s u : F) (s0 : 0 ≤ s) : abs (s * u) ≤ s * abs u.
@@ -289,6 +289,7 @@ Section picard_lindelof.
       rewrite plus_negate_r, abs_0; exact (pos_rationals_to_field_qpos Q e).
     Defined.
 
+    (* [half_pos] and [half_lt_1] in IntermediateValue.v state the same for [' (1 / 2 : Qpos Q)], with positivity in [F]; sharing them would mean using one representation of one half in both files. *)
     Local Lemma half_pos : 0 < (/ 2 : Q).
     Proof.
       apply pos_dec_recip_compat, lt_0_2.

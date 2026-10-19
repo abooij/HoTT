@@ -352,7 +352,8 @@ Section integration.
       Proof.
         intro e; apply tr; exists (riemann_modulus e); intros n len.
         apply (field_close_iff_abs Q).
-        exact (transitivity (integral_riemann_sum_lt e n len) (qpos_half_lt Q F e)).
+        exact (transitivity (integral_riemann_sum_lt e n len)
+                 (strictly_order_preserving (cast Q F) _ _ (qpos_half_lt e))).
       Qed.
 
     End riemann.
@@ -365,14 +366,11 @@ Section integration.
     Context `{Integration} `{Funext} {Qtrich : Trichotomy (<)}
       {Farch : ArchimedeanProperty Q F} {Qroundup : RoundUpStrict Q} {a b : F}.
 
-    Local Definition locator_0 : locator Q F 0
-      := transport (locator Q F) (preserves_0 (f:=cast Q F)) (locator_left Q F 0).
-
     Local Definition locator_sum_upto (g : nat -> F) (lg : forall k, locator Q F (g k))
       : forall n, locator Q F (sum_upto g n).
     Proof.
       intro n; induction n as [|n IH].
-      - exact locator_0.
+      - exact (locator_0 Q F).
       - exact (locator_plus Q F IH (lg n)).
     Defined.
 

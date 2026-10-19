@@ -44,22 +44,6 @@ Section ivt.
 
   (** ** Nested intervals *)
 
-  (** Two elements of an interval of width less than [e] are [e]-close. *)
-  Lemma field_close_interval (e : Qpos Q) (a b u v : F) (au : a ≤ u ≤ b) (av : a ≤ v ≤ b)
-    (lt : b - a < ' (' e))
-    : field_close Q e u v.
-  Proof.
-    split.
-    - apply flip_lt_negate_l.
-      rewrite <- negate_swap_r.
-      refine (le_lt_trans _ _ _ _ lt).
-      apply plus_le_compat; [exact (snd av)|].
-      exact (snd (flip_le_negate _ _) (fst au)).
-    - refine (le_lt_trans _ _ _ _ lt).
-      apply plus_le_compat; [exact (snd au)|].
-      exact (snd (flip_le_negate _ _) (fst av)).
-  Qed.
-
   (** Bounds on the tail of a sequence are bounds on its limit. *)
   Lemma le_limit (y : nat -> F) (l c : F) (N : nat) (islim : IsLimit Q F y l)
     (le : forall n, (N <= n)%nat -> c ≤ y n)
@@ -130,7 +114,7 @@ Section ivt.
       intros e m n lem len.
       set (M := nested_modulus e) in *.
       destruct (nested_le M m lem) as [zm wm], (nested_le M n len) as [zn wn].
-      apply (field_close_interval e (z M) (w M)).
+      apply (interval_minus_lt (z M) (w M)).
       - exact (transitivity zm (fst (zyw m)), transitivity (snd (zyw m)) wm).
       - exact (transitivity zn (fst (zyw n)), transitivity (snd (zyw n)) wn).
       - exact (nested_width_lt e M (leq_refl M)).
@@ -152,19 +136,25 @@ Section ivt.
       : IsLimit Q F y l.
     Proof.
       intro e; apply tr; exists (nested_modulus e); intros n len.
-      exact (field_close_interval e (z n) (w n) l (y n) (zlw n) (zyw n)
-               (nested_width_lt e n len)).
+      exact (interval_minus_lt (z n) (w n) l (y n) _ (zlw n) (zyw n) (nested_width_lt e n len)).
     Qed.
 
   End nested.
 
   (** ** The approximate intermediate value theorem *)
 
-  Local Definition locator_0 : locator Q F 0
+  Definition locator_0 : locator Q F 0
     := transport (locator Q F) (preserves_0 (f:=cast Q F)) (locator_left Q F 0).
 
   Local Definition locator_1 : locator Q F 1
     := transport (locator Q F) (preserves_1 (f:=cast Q F)) (locator_left Q F 1).
+
+  (** A rational strict upper bound of a nonnegative element is positive. *)
+  Lemma qpos_of_upper_bound (u : F) (r : Q) (u0 : 0 ≤ u) (ltr : u < ' r) : 0 < r.
+  Proof.
+    apply (strictly_order_reflecting (cast Q F)).
+    rewrite (preserves_0 (f:=cast Q F)); exact (le_lt_trans _ _ _ u0 ltr).
+  Qed.
 
   (** *** Interpolating bisection *)
 
@@ -177,12 +167,6 @@ Section ivt.
     change (half + half) with (' (1 / 2 + 1 / 2 : Qpos Q)).
     rewrite <- (pos_split2 1).
     rewrite (preserves_1 (f:=cast Q F)); apply mult_1_r.
-  Qed.
-
-  Lemma qpos_half_lt (e : Qpos Q) : ' (e / 2) < ' e.
-  Proof.
-    rewrite (ap (cast (Qpos Q) Q) (pos_split2 e)).
-    exact (fst (pos_plus_lt_compat_r _ _) (pos_is_pos _)).
   Qed.
 
   Definition half_lt_1 : half < 1 := qpos_half_lt 1.
@@ -404,10 +388,7 @@ Section ivt.
       assert (lt := fst (pos_plus_lt_compat_r (b - a) 1) lt_0_1).
       assert (q := archimedean_property Q F _ _ lt); strip_truncations.
       destruct q as [q [ltq _]].
-      assert (qpos : 0 < q).
-      { apply (strictly_order_reflecting (cast Q F)).
-        rewrite (preserves_0 (f:=cast Q F)).
-        exact (le_lt_trans _ _ _ (snd (flip_nonneg_minus _ _) leab) ltq). }
+      assert (qpos := qpos_of_upper_bound _ q (snd (flip_nonneg_minus _ _) leab) ltq).
       exact (tr (mkQpos q qpos; lt_le _ _ ltq)).
     Qed.
 
@@ -627,12 +608,6 @@ Section ivt.
       exact (le_lt_trans _ _ _ (join_ub_r _ _) ltr).
   Qed.
 
-  Local Definition lt_minus_qpos (q : Q) (e : Qpos Q) : q - ' e < q
-    := fst (pos_minus_lt_compat_r q (' e)) (pos_is_pos e).
-
-  Local Definition lt_plus_qpos (q : Q) (e : Qpos Q) : q < q + ' e
-    := fst (pos_plus_lt_compat_r q (' e)) (pos_is_pos e).
-
   (** Locators let us turn local nonconstancy into structure, and find roots. *)
   Section search.
     Context `{Funext} (QQpos_eq : nat <~> Q * Qpos Q).
@@ -669,8 +644,10 @@ Section ivt.
       (** For a rational [r] and a positive rational [n], we decide approximately whether [r] is [n]-far from [x] and [y], and whether [f r] is [n]-far from [t]. *)
       Local Definition RationalFar (rn : Q * Qpos Q) : Type
         := let (r, n) := rn in
-           (locates_left Q F (lx : locator' Q F x) (lt_minus_qpos r n)
-            * locates_right Q F _ (ly : locator' Q F y) _ _ (lt_plus_qpos r n)
+           (locates_left Q F (lx : locator' Q F x)
+              (fst (pos_minus_lt_compat_r r (' n)) (pos_is_pos n))
+            * locates_right Q F _ (ly : locator' Q F y) _ _
+                (fst (pos_plus_lt_compat_r r (' n)) (pos_is_pos n))
             * (locates_right Q F _ (locator_value_minus r : locator' Q F _) _ _ (qpos_half_lt n)
                + locates_left Q F (locator_value_minus r : locator' Q F _)
                    (snd (flip_lt_negate _ _) (qpos_half_lt n))))%type.

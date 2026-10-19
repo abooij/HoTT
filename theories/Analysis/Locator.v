@@ -189,17 +189,7 @@ Section locator.
 
   End logic2.
 
-  Local Definition ltQnegQ (q : Q) (eps : Qpos Q) : q - 'eps < q.
-  Proof.
-    apply (pos_minus_lt_compat_r q ('eps)), eps.
-  Qed.
-  
   Local Open Scope mc_scope.
-
-  Local Definition ltQposQ (q : Q) (eps : Qpos Q) : q < q + 'eps.
-  Proof.
-    apply (pos_plus_lt_compat_r q ('eps)), eps.
-  Qed.
 
   Definition locator_minus {x : F} (l : locator x) : locator (-x).
   Proof.
@@ -213,7 +203,8 @@ Section locator.
   (** Given a real with a locator, we can find integer bounds: we search for the least [n : nat] for which the locator places [x] above [- n - 1] when comparing it with [- n - 1 < - n]. *)
   Definition lower_bound {x : F} (l : locator x) : {q : Q | ' q < x}.
   Proof.
-    pose (P n := locates_right l (ltQnegQ (- naturals_to_semiring nat Q n) 1)).
+    pose (P n := locates_right l
+                   (fst (pos_minus_lt_compat_r (- naturals_to_semiring nat Q n) 1) lt_0_1)).
     assert (inhab : hexists P).
     { refine (Trunc_functor _ _ (archimedean_property Q F (x - 1) x
                                    (fst (pos_minus_lt_compat_r x 1) lt_0_1))).
@@ -412,7 +403,9 @@ Section locator.
     Definition archimedean_structure : {q : Q | x < 'q < y}.
     Proof.
       pose (u n := (tight_bound l (precision n / 2)).1).
-      pose (P n := locates_right m (ltQposQ (u n + ' (precision n / 2)) (precision n / 2))).
+      pose (P n := locates_right m
+                     (fst (pos_plus_lt_compat_r (u n + ' (precision n / 2)) (' (precision n / 2)))
+                        (pos_is_pos _))).
       assert (inhab : hexists P).
       { refine (Trunc_functor _ _ (archimedean_property Q F 0 (y - x)
                                      (snd (flip_pos_minus _ _) ltxy))).
@@ -620,7 +613,7 @@ Section locator.
       change (q + (' e + ' e + ' e) - ' e = q + ' e + ' e).
       rewrite <- plus_assoc, <- (plus_assoc (' e + ' e)), plus_negate_r, plus_0_r, plus_assoc.
       reflexivity. }
-    rewrite p; apply ltQposQ.
+    rewrite p; apply pos_plus_lt_compat_r, pos_is_pos.
   Qed.
 
   (** A pair of predicates [L] and [U] on [Q] is located in a reflective subuniverse [O] if [O (L q + U r)] whenever [q < r]. For the identity modality and the predicates [' q < x] and [x < ' r] this is a locator for [x], and for the propositional truncation it is the locatedness of a Dedekind cut. Such a pair is located if it has located approximations [La e] and [Ua e] of every precision [e], in the sense that [La e (q + e)] implies [L q] and [Ua e (r - e)] implies [U r]: for [q < r], we use the approximation of precision [(r - q) / 3]. *)
