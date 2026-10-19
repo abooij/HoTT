@@ -358,6 +358,51 @@ Section picard_lindelof.
     exact (mkQpos _ K0; fun p => lt_le _ _ (lt p)).
   Defined.
 
+  (** The radius [l = min(a, b / K, 1 / (2 rL))], for a bound [K] on [g] and a rational upper bound [rL] on [L], with a locator; then [l K ≤ b] and [l L ≤ 1/2]. *)
+  Definition picard_radius (K : Qpos Q)
+    : {l : F & prod (locator Q F l)
+                 (prod (prod (prod (0 < l) (l ≤ a)) (' (' K) * l ≤ b)) (L * l ≤ ' (/ 2 : Q)))}.
+  Proof.
+    destruct (upper_bound Q F Q_eq lL) as [rL ltL].
+    assert (rL0 : 0 < rL) by exact (qpos_of_upper_bound _ _ (lt_le _ _ L0) ltL).
+    assert (K0 := pos_is_pos K).
+    set (u := b * ' (/ ' K)); set (w := ' (/ rL / 2) : F).
+    assert (u0 : 0 < u).
+    { apply pos_mult_compat; [exact b0|apply qinc_pos, pos_dec_recip_compat, K0]. }
+    assert (w0 : 0 < w).
+    { apply qinc_pos, pos_mult_compat; [apply pos_dec_recip_compat, rL0|exact half_pos]. }
+    exists (meet a (meet u w)).
+    refine (locator_meet Q F la (locator_meet Q F (locator_times Q F Q_eq lb (locator_left Q F _))
+                                   (locator_left Q F _)), (((_, meet_lb_l _ _), _), _)).
+    - exact (meet_lt_l _ _ _ a0 (meet_lt_l _ _ _ u0 w0)).
+    - (* [l K ≤ u K = b] *)
+      refine (transitivity (order_preserving (' (' K) *.) _ _
+                              (transitivity (meet_lb_r _ _) (meet_lb_l _ _))) (eq_le _ _ _)).
+      unfold u; rewrite mult_assoc, (mult_comm (' (' K))), <- mult_assoc.
+      rewrite <- (preserves_mult (f:=cast Q F)), (dec_recip_inverse _ (lt_ne_flip _ _ K0)).
+      rewrite (preserves_1 (f:=cast Q F)); apply mult_1_r.
+    - (* [L l ≤ rL w = 1/2] *)
+      assert (rLw : ' rL * w = ' (/ 2 : Q)).
+      { unfold w; rewrite <- (preserves_mult (f:=cast Q F)); apply ap.
+        rewrite mult_assoc, (dec_recip_inverse _ (lt_ne_flip _ _ rL0)); apply mult_1_l. }
+      assert (PropHolds (0 ≤ L)) by exact (lt_le _ _ L0).
+      assert (PropHolds (0 ≤ w)) by exact (lt_le _ _ w0).
+      lhs' exact (order_preserving (L *.) _ _ (transitivity (meet_lb_r _ _) (meet_lb_r _ _))).
+      exact (transitivity (order_preserving (.* w) _ _ (lt_le _ _ ltL)) (eq_le _ _ rLw)).
+  Defined.
+
+  (** A rational bound on the width of [[y0 - b, y0 + b]]. *)
+  Local Definition picard_width_bound : {C : Qpos Q & (y0 + b) - (y0 - b) ≤ ' (' C)}.
+  Proof.
+    destruct (upper_bound Q F Q_eq (locator_width y0 b ly0 lb)) as [C ltC].
+    assert (C0 : 0 < C).
+    { refine (qpos_of_upper_bound _ _ _ ltC).
+      apply (snd (flip_nonneg_minus _ _)).
+      exact (transitivity (fst (center_bounds y0 b (lt_le _ _ b0)))
+               (snd (center_bounds y0 b (lt_le _ _ b0)))). }
+    exact (mkQpos C C0; lt_le _ _ ltC).
+  Defined.
+
   (** Picard–Lindelöf: we compute [l] with a locator and [0 < l ≤ a], and a uniformly continuous map [f : [x0 - l, x0 + l] -> [y0 - b, y0 + b]] that lifts to locators, with [f x = y0 + ∫_{x0}^x g (t, f t) dt]. *)
   Definition picard_lindelof
     : {l : F & {ll : locator Q F l & {bounds : (0 < l) * (l ≤ a) &
@@ -367,43 +412,10 @@ Section picard_lindelof.
                                   (interval_center x0 l (lt_le _ _ (fst bounds))) x}}}}.
   Proof.
     destruct picard_bound as [K gK].
-    destruct (upper_bound Q F Q_eq lL) as [rL ltL].
-    assert (rL0 : 0 < rL) by exact (qpos_of_upper_bound _ _ (lt_le _ _ L0) ltL).
-    assert (K0 := pos_is_pos K).
-    set (u := b * ' (/ ' K)); set (w := ' (/ rL / 2) : F).
-    assert (u0 : 0 < u).
-    { apply pos_mult_compat; [exact b0|apply qinc_pos, pos_dec_recip_compat, K0]. }
-    assert (w0 : 0 < w).
-    { apply qinc_pos, pos_mult_compat; [apply pos_dec_recip_compat, rL0|exact half_pos]. }
-    set (l := meet a (meet u w)).
-    exists l.
-    exists (locator_meet Q F la (locator_meet Q F (locator_times Q F Q_eq lb (locator_left Q F _))
-                                   (locator_left Q F _))).
-    exists (meet_lt_l _ _ _ a0 (meet_lt_l _ _ _ u0 w0), meet_lb_l _ _).
-    assert (lu : l ≤ u) by exact (transitivity (meet_lb_r _ _) (meet_lb_l _ _)).
-    assert (lw : l ≤ w) by exact (transitivity (meet_lb_r _ _) (meet_lb_r _ _)).
-    pose (l0 := lt_le _ _ (meet_lt_l _ _ _ a0 (meet_lt_l _ _ _ u0 w0)) : 0 ≤ l).
-    assert (lKb : ' (' K) * l ≤ b).
-    { refine (transitivity (order_preserving (' (' K) *.) _ _ lu) (eq_le _ _ _)).
-      unfold u; rewrite mult_assoc, (mult_comm (' (' K))), <- mult_assoc.
-      rewrite <- (preserves_mult (f:=cast Q F)), (dec_recip_inverse _ (lt_ne_flip _ _ K0)).
-      rewrite (preserves_1 (f:=cast Q F)); apply mult_1_r. }
-    assert (rLw : ' rL * w = ' (/ 2 : Q)).
-    { unfold w; rewrite <- (preserves_mult (f:=cast Q F)); apply ap.
-      rewrite mult_assoc, (dec_recip_inverse _ (lt_ne_flip _ _ rL0)); apply mult_1_l. }
-    assert (lLc : L * l ≤ ' (/ 2 : Q)).
-    { assert (PropHolds (0 ≤ L)) by exact (lt_le _ _ L0).
-      assert (PropHolds (0 ≤ w)) by exact (lt_le _ _ w0).
-      lhs' exact (order_preserving (L *.) _ _ lw).
-      exact (transitivity (order_preserving (.* w) _ _ (lt_le _ _ ltL)) (eq_le _ _ rLw)). }
-    destruct (upper_bound Q F Q_eq (locator_width y0 b ly0 lb)) as [C ltC].
-    assert (C0 : 0 < C).
-    { refine (qpos_of_upper_bound _ _ _ ltC).
-      apply (snd (flip_nonneg_minus _ _)).
-      exact (transitivity (fst (center_bounds y0 b (lt_le _ _ b0)))
-               (snd (center_bounds y0 b (lt_le _ _ b0)))). }
-    destruct (picard_solution K gK l l0 (meet_lb_l _ _) lKb lLc (mkQpos C C0) (lt_le _ _ ltC))
-      as [f p].
+    destruct (picard_radius K) as [l [ll [[[l0 la'] lKb] lLc]]].
+    exists l, ll, (l0, la').
+    destruct (picard_solution K gK l (lt_le _ _ l0) la' lKb lLc
+                picard_width_bound.1 picard_width_bound.2) as [f p].
     exists f; intros x fu; rewrite p; unfold picard_value; apply ap.
     exact (ap (fun fu' => integral Q F _ fu' _ x) (path_ishprop _ _)).
   Defined.
