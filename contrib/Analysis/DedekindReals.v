@@ -520,9 +520,9 @@ Section dedekind.
     - exact _.
     - intros x y a; strip_truncations; apply tr; destruct a as [a|a]; [right|left]; exact a.
     - intros x y a z; strip_truncations; destruct a as [a|a].
-      + assert (c := lt_dedekindreals_cotrans x y a z); strip_truncations.
+      + assert (c := lt_dedekindreals_cotrans x y a z); clear a; strip_truncations.
         apply tr; destruct c as [c|c]; [left|right]; apply tr; left; exact c.
-      + assert (c := lt_dedekindreals_cotrans y x a z); strip_truncations.
+      + assert (c := lt_dedekindreals_cotrans y x a z); clear a; strip_truncations.
         apply tr; destruct c as [c|c]; [right|left]; apply tr; right; exact c.
     - intros x y; split.
       + intros na; apply path_dedekindreals_lower.
@@ -1202,7 +1202,8 @@ Section dedekind.
     : StrongBinaryExtensionality (A:=R) (.*.).
   Proof.
     intros x1 y1 x2 y2 a.
-    assert (c := cotransitive a (x1 * y2)); strip_truncations; apply tr; destruct c as [c|c].
+    assert (c := cotransitive a (x1 * y2)); clear a; strip_truncations.
+    apply tr; destruct c as [c|c].
     - right; apply apart_dedekindreals_iff_minus_zero.
       apply (mult_dedekindreals_apart_zero_r x1).
       rewrite plus_mult_distr_l, <- negate_mult_distr_r.
@@ -1332,7 +1333,7 @@ Section dedekind.
            exact (strictly_order_preserving (.* x) [q] [q'] (fst (rational_dedekind_lt q q') l)). }
       intros l.
       assert (t := dedekindreals_archimedean _ _ l); assert (b := merely_pos_upper x xpos).
-      strip_truncations; destruct t as [t [lt lt1]], b as [b [bpos lb]].
+      clear l xpos; strip_truncations; destruct t as [t [lt lt1]], b as [b [bpos lb]].
       apply (rational_dedekind_lt t 1) in lt1.
       assert (upos : 0 < 1 - t) by exact (snd (flip_pos_minus t 1) lt1).
       apply tr; exists (q + (1 - t) / b); split.
@@ -1351,7 +1352,7 @@ Section dedekind.
            exact (strictly_order_preserving (.* x) [r'] [r] (fst (rational_dedekind_lt r' r) l)). }
       intros l.
       assert (t := dedekindreals_archimedean _ _ l); assert (b := merely_pos_upper x xpos).
-      strip_truncations; destruct t as [t [lt1 lt]], b as [b [bpos lb]].
+      clear l xpos; strip_truncations; destruct t as [t [lt1 lt]], b as [b [bpos lb]].
       apply (rational_dedekind_lt 1 t) in lt1.
       assert (upos : 0 < t - 1) by exact (snd (flip_pos_minus 1 t) lt1).
       apply tr; exists (r - (t - 1) / b); split.
@@ -1650,7 +1651,7 @@ Section complete.
     Proof.
       intros ln; apply le_iff_not_lt_flip; intros l.
       apply flip_lt_minus_r in l.
-      assert (c := dedekindreals_archimedean Q _ _ l); strip_truncations.
+      assert (c := dedekindreals_archimedean Q _ _ l); clear l; strip_truncations.
       destruct c as [r [lr lr']].
       rewrite plus_comm in lr; apply flip_lt_minus_r in lr.
       rewrite <- rational_dedekind_minus in lr; apply (fst (lt_rational_dedekind_r Q _ _)) in lr.
@@ -1671,7 +1672,7 @@ Section complete.
     Proof.
       intros ln; apply le_iff_not_lt_flip; intros l.
       apply flip_lt_minus_r in l.
-      assert (c := dedekindreals_archimedean Q _ _ l); strip_truncations.
+      assert (c := dedekindreals_archimedean Q _ _ l); clear l; strip_truncations.
       destruct c as [r [lr lr']].
       apply (fst (lt_rational_dedekind_l Q r _)) in lr'.
       rewrite plus_comm in lr; apply flip_lt_minus_r in lr.
