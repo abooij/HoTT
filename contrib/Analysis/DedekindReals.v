@@ -126,8 +126,7 @@ Section dedekind.
   Proof.
     intros p.
     apply (lower_cut_rounded y q) in p; strip_truncations; destruct p as [q' [ltqq' p]].
-    assert (c := cut_located (isdedekindcut x) q q' ltqq'); strip_truncations.
-    apply tr; destruct c as [lq|uq'].
+    generalize (cut_located (isdedekindcut x) q q' ltqq'); apply Trunc_functor; intros [lq|uq'].
     - left; exact lq.
     - right; apply tr; exact (q'; (uq', p)).
   Qed.
@@ -136,8 +135,7 @@ Section dedekind.
   Proof.
     intros p.
     apply (upper_cut_rounded x r) in p; strip_truncations; destruct p as [r' [ltr'r p]].
-    assert (c := cut_located (isdedekindcut y) r' r ltr'r); strip_truncations.
-    apply tr; destruct c as [lr'|ur].
+    generalize (cut_located (isdedekindcut y) r' r ltr'r); apply Trunc_functor; intros [lr'|ur].
     - right; apply tr; exact (r'; (p, lr')).
     - left; exact ur.
   Qed.
@@ -208,8 +206,7 @@ Section dedekind.
     Proof.
       intros la.
       assert (lt : a + d < a + d + d) by apply pos_plus_lt_compat_r, pos_is_pos.
-      assert (c := cut_located (isdedekindcut x) _ _ lt); strip_truncations.
-      apply tr; destruct c as [lad|uadd].
+      generalize (cut_located (isdedekindcut x) _ _ lt); apply Trunc_functor; intros [lad|uadd].
       - right; exact lad.
       - left; exists a, (a + d + d); split; [exact (la, uadd)|].
         rewrite <- (plus_assoc a d d), <- plus_conjugate.
@@ -238,8 +235,7 @@ Section dedekind.
       assert (ltb : b < a + nQ N * d).
       { rewrite plus_comm; apply flip_lt_minus_l.
         apply (flip_lt_mult_dec_recip_l (b - a) (nQ N) d); [apply pos_is_pos|exact ltN]. }
-      assert (c := approximate_walk a la N); strip_truncations.
-      destruct c as [close|laN]; [exact (tr close)|].
+      generalize (approximate_walk a la N); apply Trunc_functor; intros [close|laN]; [exact close|].
       destruct (lt_flip _ _ ltb (cut_transitive (isdedekindcut x) _ _ laN ub)).
     Qed.
 
@@ -272,16 +268,16 @@ Section dedekind.
   Proof.
     split.
     - intros l; strip_truncations; destruct l as [s [l p]]; exact (lower_cut_lt x q s l p).
-    - intros p; apply (lower_cut_rounded x q) in p; strip_truncations.
-      destruct p as [s [l p]]; exact (tr (s; (l, p))).
+    - intros p; apply (lower_cut_rounded x q) in p; revert p; apply Trunc_functor.
+      intros [s [l p]]; exact (s; (l, p)).
   Qed.
 
   Lemma lt_rational_dedekind_r (r : Q) (x : R) : x < rational_dedekind r <-> upper_cut x r.
   Proof.
     split.
     - intros l; strip_truncations; destruct l as [s [p l]]; exact (upper_cut_lt x r s l p).
-    - intros p; apply (upper_cut_rounded x r) in p; strip_truncations.
-      destruct p as [s [l p]]; exact (tr (s; (p, l))).
+    - intros p; apply (upper_cut_rounded x r) in p; revert p; apply Trunc_functor.
+      intros [s [l p]]; exact (s; (p, l)).
   Qed.
 
   Lemma le_iff_not_lt_dedekindreals (x y : R) : x <= y <-> ~ (y < x).
@@ -309,12 +305,12 @@ Section dedekind.
     Proof.
       split.
       - intros p; strip_truncations; destruct p as [s [ls lt]].
-        apply (lower_cut_rounded y) in lt; strip_truncations; destruct lt as [t [ltt lt]].
-        apply tr; exists (s + t); split.
+        apply (lower_cut_rounded y) in lt; revert lt; apply Trunc_functor; intros [t [ltt lt]].
+        exists (s + t); split.
         + rewrite (plus_conjugate_alt q s); apply (strictly_order_preserving (s +)), ltt.
         + apply tr; exists s; rewrite <- plus_conjugate; exact (ls, lt).
-      - intros p; strip_truncations; destruct p as [q' [ltqq' p]]; strip_truncations.
-        destruct p as [s [ls lt]]; apply tr; exists s; split; [exact ls|].
+      - intros p; strip_truncations; destruct p as [q' [ltqq' p]].
+        revert p; apply Trunc_functor; intros [s [ls lt]]; exists s; split; [exact ls|].
         apply (lower_cut_lt y _ (q' - s)); [|exact lt].
         apply (strictly_order_preserving (+ (- s))), ltqq'.
     Qed.
@@ -324,12 +320,12 @@ Section dedekind.
     Proof.
       split.
       - intros p; strip_truncations; destruct p as [s [us ut]].
-        apply (upper_cut_rounded y) in ut; strip_truncations; destruct ut as [t [ltt ut]].
-        apply tr; exists (s + t); split.
+        apply (upper_cut_rounded y) in ut; revert ut; apply Trunc_functor; intros [t [ltt ut]].
+        exists (s + t); split.
         + rewrite (plus_conjugate_alt r s); apply (strictly_order_preserving (s +)), ltt.
         + apply tr; exists s; rewrite <- plus_conjugate; exact (us, ut).
-      - intros p; strip_truncations; destruct p as [r' [ltr'r p]]; strip_truncations.
-        destruct p as [s [us ut]]; apply tr; exists s; split; [exact us|].
+      - intros p; strip_truncations; destruct p as [r' [ltr'r p]].
+        revert p; apply Trunc_functor; intros [s [us ut]]; exists s; split; [exact us|].
         apply (upper_cut_lt y _ (r' - s)); [|exact ut].
         apply (strictly_order_preserving (+ (- s))), ltr'r.
     Qed.
@@ -349,8 +345,7 @@ Section dedekind.
       assert (c := cut_approximate x (Qpos_diff q r l)); strip_truncations.
       destruct c as [a [b [[la ub] lab]]].
       assert (l' : q - a < r - b) by exact (lt_minus_swap q r a b lab).
-      assert (c := cut_located (isdedekindcut y) _ _ l'); strip_truncations.
-      apply tr; destruct c as [c|c].
+      generalize (cut_located (isdedekindcut y) _ _ l'); apply Trunc_functor; intros [c|c].
       - left; apply tr; exact (a; (la, c)).
       - right; apply tr; exact (b; (ub, c)).
     Qed.
@@ -389,21 +384,21 @@ Section dedekind.
     : IsDedekindCut (fun q => upper_cut x (- q)) (fun r => lower_cut x (- r)).
   Proof.
     split.
-    - assert (b := cut_upper_inhabited (isdedekindcut x)); strip_truncations.
-      destruct b as [b ub]; apply tr; exists (- b); rewrite negate_involutive; exact ub.
-    - assert (a := cut_lower_inhabited (isdedekindcut x)); strip_truncations.
-      destruct a as [a la]; apply tr; exists (- a); rewrite negate_involutive; exact la.
+    - generalize (cut_upper_inhabited (isdedekindcut x)); apply Trunc_functor.
+      intros [b ub]; exists (- b); rewrite negate_involutive; exact ub.
+    - generalize (cut_lower_inhabited (isdedekindcut x)); apply Trunc_functor.
+      intros [a la]; exists (- a); rewrite negate_involutive; exact la.
     - intros q; split.
-      + intros p; apply (upper_cut_rounded x) in p; strip_truncations.
-        destruct p as [r [l p]]; apply tr; exists (- r); split.
+      + intros p; apply (upper_cut_rounded x) in p; revert p; apply Trunc_functor.
+        intros [r [l p]]; exists (- r); split.
         * apply flip_lt_negate_r, l.
         * rewrite negate_involutive; exact p.
       + intros p; strip_truncations; destruct p as [q' [l p]].
         apply (upper_cut_lt x _ (- q')); [|exact p].
         exact (snd (flip_lt_negate q q') l).
     - intros r; split.
-      + intros p; apply (lower_cut_rounded x) in p; strip_truncations.
-        destruct p as [q [l p]]; apply tr; exists (- q); split.
+      + intros p; apply (lower_cut_rounded x) in p; revert p; apply Trunc_functor.
+        intros [q [l p]]; exists (- q); split.
         * apply flip_lt_negate_l, l.
         * rewrite negate_involutive; exact p.
       + intros p; strip_truncations; destruct p as [r' [l p]].
@@ -412,8 +407,8 @@ Section dedekind.
     - intros q r u l.
       apply (fst (flip_lt_negate q r)), (cut_transitive (isdedekindcut x)); [exact l|exact u].
     - intros q r l.
-      assert (c := cut_located (isdedekindcut x) (- r) (- q) (snd (flip_lt_negate q r) l)).
-      strip_truncations; apply tr; destruct c as [c|c]; [right|left]; exact c.
+      generalize (cut_located (isdedekindcut x) (- r) (- q) (snd (flip_lt_negate q r) l)).
+      apply Trunc_functor; intros [c|c]; [right|left]; exact c.
   Qed.
 
   #[local] Instance negate_dedekindreals : Negate R
@@ -432,10 +427,10 @@ Section dedekind.
   Lemma plus_dedekindreals_comm (x y : R) : x + y = y + x.
   Proof.
     apply path_dedekindreals.
-    - intros q p; strip_truncations; destruct p as [s [ls lt]].
-      apply tr; exists (q - s); rewrite minus_minus_cancel; exact (lt, ls).
-    - intros r p; strip_truncations; destruct p as [s [us ut]].
-      apply tr; exists (r - s); rewrite minus_minus_cancel; exact (ut, us).
+    - intros q; apply Trunc_functor; intros [s [ls lt]].
+      exists (q - s); rewrite minus_minus_cancel; exact (lt, ls).
+    - intros r; apply Trunc_functor; intros [s [us ut]].
+      exists (r - s); rewrite minus_minus_cancel; exact (ut, us).
   Qed.
 
   Local Lemma minus_plus_distr (q s t : Q) : q - (s + t) = (q - s) - t.
@@ -446,14 +441,14 @@ Section dedekind.
   Lemma plus_dedekindreals_assoc (x y z : R) : x + (y + z) = (x + y) + z.
   Proof.
     apply path_dedekindreals.
-    - intros q p; strip_truncations; destruct p as [s [ls p]]; strip_truncations.
-      destruct p as [t [lt lu]].
-      apply tr; exists (s + t); split.
+    - intros q p; strip_truncations; destruct p as [s [ls p]].
+      revert p; apply Trunc_functor; intros [t [lt lu]].
+      exists (s + t); split.
       + apply tr; exists s; rewrite <- plus_conjugate; exact (ls, lt).
       + rewrite minus_plus_distr; exact lu.
-    - intros r p; strip_truncations; destruct p as [s [us p]]; strip_truncations.
-      destruct p as [t [ut uu]].
-      apply tr; exists (s + t); split.
+    - intros r p; strip_truncations; destruct p as [s [us p]].
+      revert p; apply Trunc_functor; intros [t [ut uu]].
+      exists (s + t); split.
       + apply tr; exists s; rewrite <- plus_conjugate; exact (us, ut).
       + rewrite minus_plus_distr; exact uu.
   Qed.
@@ -500,8 +495,7 @@ Section dedekind.
   Lemma lt_dedekindreals_cotrans (x y : R) : x < y -> forall z, hor (x < z) (z < y).
   Proof.
     intros l z; strip_truncations; destruct l as [q [uq lq]].
-    assert (c := upper_cut_cotrans x z q uq); strip_truncations.
-    apply tr; destruct c as [uzq|ltxz].
+    generalize (upper_cut_cotrans x z q uq); apply Trunc_functor; intros [uzq|ltxz].
     - right; apply tr; exact (q; (uzq, lq)).
     - left; exact ltxz.
   Qed.
@@ -518,12 +512,12 @@ Section dedekind.
     split.
     - exact _.
     - exact _.
-    - intros x y a; strip_truncations; apply tr; destruct a as [a|a]; [right|left]; exact a.
+    - intros x y; apply Trunc_functor; intros [a|a]; [right|left]; exact a.
     - intros x y a z; strip_truncations; destruct a as [a|a].
-      + assert (c := lt_dedekindreals_cotrans x y a z); strip_truncations.
-        apply tr; destruct c as [c|c]; [left|right]; apply tr; left; exact c.
-      + assert (c := lt_dedekindreals_cotrans y x a z); strip_truncations.
-        apply tr; destruct c as [c|c]; [right|left]; apply tr; right; exact c.
+      + generalize (lt_dedekindreals_cotrans x y a z); apply Trunc_functor.
+        intros [c|c]; [left|right]; apply tr; left; exact c.
+      + generalize (lt_dedekindreals_cotrans y x a z); apply Trunc_functor.
+        intros [c|c]; [right|left]; apply tr; right; exact c.
     - intros x y; split.
       + intros na; apply path_dedekindreals_lower.
         * apply (snd (le_iff_not_lt_dedekindreals x y)); intros l; exact (na (tr (inr l))).
@@ -591,12 +585,12 @@ Section dedekind.
     Proof.
       split.
       - intros p; strip_truncations; destruct p as [p|p].
-        + apply (lower_cut_rounded x q) in p; strip_truncations; destruct p as [q' [l p]].
-          exact (tr (q'; (l, tr (inl p)))).
-        + apply (lower_cut_rounded y q) in p; strip_truncations; destruct p as [q' [l p]].
-          exact (tr (q'; (l, tr (inr p)))).
-      - intros p; strip_truncations; destruct p as [q' [l p]]; strip_truncations.
-        apply tr; destruct p as [p|p]; [left|right]; exact (lower_cut_lt _ q q' l p).
+        + apply (lower_cut_rounded x q) in p; revert p; apply Trunc_functor.
+          intros [q' [l p]]; exact (q'; (l, tr (inl p))).
+        + apply (lower_cut_rounded y q) in p; revert p; apply Trunc_functor.
+          intros [q' [l p]]; exact (q'; (l, tr (inr p))).
+      - intros p; strip_truncations; destruct p as [q' [l p]].
+        revert p; apply Trunc_functor; intros [p|p]; [left|right]; exact (lower_cut_lt _ q q' l p).
     Qed.
 
     Local Lemma join_upper_rounded (r : Q)
@@ -615,8 +609,8 @@ Section dedekind.
     Lemma isdedekindcut_join : IsDedekindCut join_lower join_upper.
     Proof.
       split.
-      - assert (a := cut_lower_inhabited (isdedekindcut x)); strip_truncations.
-        destruct a as [a la]; exact (tr (a; tr (inl la))).
+      - generalize (cut_lower_inhabited (isdedekindcut x)); apply Trunc_functor.
+        intros [a la]; exact (a; tr (inl la)).
       - assert (b := cut_upper_inhabited (isdedekindcut x)).
         assert (b' := cut_upper_inhabited (isdedekindcut y)); strip_truncations.
         destruct (upper_cut_max _ _ b.2 b'.2) as [m [um _]].
@@ -848,30 +842,32 @@ Section dedekind.
       : mult_lower q <-> hexists (fun q' => prod (q < q') (mult_lower q')).
     Proof.
       split.
-      - intros p; strip_truncations; destruct p as [I p]; strip_truncations; destruct p as [J p].
+      - intros p; strip_truncations; destruct p as [I p].
+        revert p; apply Trunc_functor; intros [J p].
         destruct (products_min I J) as [m [[s [t [[si it] pm]]] below]].
         destruct (Q_dense q m) as [w [lqw lwm]]; [rewrite pm; exact (p s t si it)|].
-        apply tr; exists w; split; [exact lqw|].
+        exists w; split; [exact lqw|].
         apply tr; exists I; apply tr; exists J; exact (below w lwm).
-      - intros p; strip_truncations; destruct p as [q' [l p]]; strip_truncations.
-        destruct p as [I p]; strip_truncations; destruct p as [J p].
-        apply tr; exists I; apply tr; exists J; intros s t si it.
-        exact (transitivity l (p s t si it)).
+      - intros p; strip_truncations; destruct p as [q' [l p]].
+        revert p; apply Trunc_functor; intros [I p]; exists I.
+        revert p; apply Trunc_functor; intros [J p]; exists J.
+        intros s t si it; exact (transitivity l (p s t si it)).
     Qed.
 
     Local Lemma mult_upper_rounded (r : Q)
       : mult_upper r <-> hexists (fun r' => prod (r' < r) (mult_upper r')).
     Proof.
       split.
-      - intros p; strip_truncations; destruct p as [I p]; strip_truncations; destruct p as [J p].
+      - intros p; strip_truncations; destruct p as [I p].
+        revert p; apply Trunc_functor; intros [J p].
         destruct (products_max I J) as [M [[s [t [[si it] pM]]] above]].
         destruct (Q_dense M r) as [w [lMw lwr]]; [rewrite pM; exact (p s t si it)|].
-        apply tr; exists w; split; [exact lwr|].
+        exists w; split; [exact lwr|].
         apply tr; exists I; apply tr; exists J; exact (above w lMw).
-      - intros p; strip_truncations; destruct p as [r' [l p]]; strip_truncations.
-        destruct p as [I p]; strip_truncations; destruct p as [J p].
-        apply tr; exists I; apply tr; exists J; intros s t si it.
-        exact (transitivity (p s t si it) l).
+      - intros p; strip_truncations; destruct p as [r' [l p]].
+        revert p; apply Trunc_functor; intros [I p]; exists I.
+        revert p; apply Trunc_functor; intros [J p]; exists J.
+        intros s t si it; exact (transitivity (p s t si it) l).
     Qed.
 
     (** We approximate [x] and [y] within [D], with [D] so small that any two products of points of the bounds are less than [e] apart. *)
@@ -900,16 +896,16 @@ Section dedekind.
     Local Lemma mult_located (q r : Q) : q < r -> hor (mult_lower q) (mult_upper r).
     Proof.
       intros ltqr.
-      assert (c := close_cutbounds (r - q) (snd (flip_pos_minus q r) ltqr)); strip_truncations.
-      destruct c as [I [J close]].
+      generalize (close_cutbounds (r - q) (snd (flip_pos_minus q r) ltqr)).
+      apply Trunc_functor; intros [I [J close]].
       destruct (products_min I J) as [m [[s0 [t0 [[is0 it0] pm]]] below]].
       destruct (le_or_lt m q) as [lmq|lqm].
-      - apply tr, inr, tr; exists I; apply tr; exists J; intros s t si it.
+      - apply inr, tr; exists I; apply tr; exists J; intros s t si it.
         assert (lt := close s t s0 t0 si it is0 it0).
         rewrite <- pm in lt; apply flip_lt_minus_l in lt.
         apply (order_preserving (r - q +)) in lmq; rewrite minus_plus_cancel in lmq.
         rapply lt_le_trans; [exact lt|exact lmq].
-      - apply tr, inl, tr; exists I; apply tr; exists J; exact (below q lqm).
+      - apply inl, tr; exists I; apply tr; exists J; exact (below q lqm).
     Qed.
 
     Lemma isdedekindcut_mult : IsDedekindCut mult_lower mult_upper.
@@ -1119,11 +1115,10 @@ Section dedekind.
     assert (e : forall q : Q, - (0 - q) = q).
     { intros q; rewrite plus_0_l; apply negate_involutive. }
     split.
-    - intros l; strip_truncations; destruct l as [q [u p]].
-      apply tr; exists q; split; [exact p|].
+    - apply Trunc_functor; intros [q [u p]]; exists q; split; [exact p|].
       exact (transport (fun w => upper_cut x w) (e q)^ u).
-    - intros p; strip_truncations; destruct p as [q [p u]].
-      exact (tr (q; (transport (fun w => upper_cut x w) (e q) u, p))).
+    - apply Trunc_functor; intros [q [p u]].
+      exact (q; (transport (fun w => upper_cut x w) (e q) u, p)).
   Qed.
 
   #[export] Instance strictlyorderpreserving_plus_dedekindreals (z : R)
@@ -1191,7 +1186,7 @@ Section dedekind.
 
   Local Lemma apart_dedekindreals_iff_minus_zero (a b : R) : a ≶ b <-> a - b ≶ 0.
   Proof.
-    split; intros p; strip_truncations; apply tr; destruct p as [l|l].
+    split; apply Trunc_functor; intros [l|l].
     - left; exact (lt_dedekindreals_minus_zero a b l).
     - right; exact (lt_dedekindreals_zero_minus a b l).
     - left; apply (lt_dedekindreals_from_minus a b b); rewrite plus_negate_r; exact l.
@@ -1202,7 +1197,7 @@ Section dedekind.
     : StrongBinaryExtensionality (A:=R) (.*.).
   Proof.
     intros x1 y1 x2 y2 a.
-    assert (c := cotransitive a (x1 * y2)); strip_truncations; apply tr; destruct c as [c|c].
+    generalize (cotransitive a (x1 * y2)); apply Trunc_functor; intros [c|c].
     - right; apply apart_dedekindreals_iff_minus_zero.
       apply (mult_dedekindreals_apart_zero_r x1).
       rewrite plus_mult_distr_l, <- negate_mult_distr_r.
@@ -1259,7 +1254,7 @@ Section dedekind.
   (** Between two Dedekind reals lies a rational. *)
   Lemma dedekindreals_archimedean (x y : R) : x < y -> hexists (fun q => prod (x < [q]) ([q] < y)).
   Proof.
-    intros l; strip_truncations; destruct l as [q [u p]]; apply tr; exists q; split.
+    apply Trunc_functor; intros [q [u p]]; exists q; split.
     - exact (snd (lt_rational_dedekind_r q x) u).
     - exact (snd (lt_rational_dedekind_l q y) p).
   Qed.
@@ -1330,12 +1325,11 @@ Section dedekind.
       2: { apply Trunc_rec; intros [q' [l p]].
            rhs_V' exact p.
            exact (strictly_order_preserving (.* x) [q] [q'] (fst (rational_dedekind_lt q q') l)). }
-      intros l.
-      assert (t := dedekindreals_archimedean _ _ l); assert (b := merely_pos_upper x xpos).
-      strip_truncations; destruct t as [t [lt lt1]], b as [b [bpos lb]].
-      apply (rational_dedekind_lt t 1) in lt1.
+      intros l; generalize (dedekindreals_archimedean _ _ l); apply Trunc_rec.
+      intros [t [lt lt1]]; apply (rational_dedekind_lt t 1) in lt1.
+      generalize (merely_pos_upper x xpos); apply Trunc_functor; intros [b [bpos lb]].
       assert (upos : 0 < 1 - t) by exact (snd (flip_pos_minus t 1) lt1).
-      apply tr; exists (q + (1 - t) / b); split.
+      exists (q + (1 - t) / b); split.
       - apply pos_plus_lt_compat_r, pos_quotient; [exact upos|exact bpos].
       - rewrite rational_dedekind_plus, plus_mult_distr_r, <- (plus_one_minus_dedekind t).
         apply plus_lt_compat; [exact lt|exact (mult_quotient_lt (1 - t) b upos bpos lb)].
@@ -1349,12 +1343,11 @@ Section dedekind.
       2: { apply Trunc_rec; intros [r' [l p]].
            lhs' exact p.
            exact (strictly_order_preserving (.* x) [r'] [r] (fst (rational_dedekind_lt r' r) l)). }
-      intros l.
-      assert (t := dedekindreals_archimedean _ _ l); assert (b := merely_pos_upper x xpos).
-      strip_truncations; destruct t as [t [lt1 lt]], b as [b [bpos lb]].
-      apply (rational_dedekind_lt 1 t) in lt1.
+      intros l; generalize (dedekindreals_archimedean _ _ l); apply Trunc_rec.
+      intros [t [lt1 lt]]; apply (rational_dedekind_lt 1 t) in lt1.
+      generalize (merely_pos_upper x xpos); apply Trunc_functor; intros [b [bpos lb]].
       assert (upos : 0 < t - 1) by exact (snd (flip_pos_minus 1 t) lt1).
-      apply tr; exists (r - (t - 1) / b); split.
+      exists (r - (t - 1) / b); split.
       - apply pos_minus_lt_compat_r, pos_quotient; [exact upos|exact bpos].
       - rewrite rational_dedekind_plus, preserves_negate, plus_mult_distr_r.
         rewrite <- negate_mult_distr_l, <- (minus_minus_one_dedekind t).
@@ -1368,12 +1361,12 @@ Section dedekind.
       - assert (l : [0] * x < 1) by (rewrite (mult_0_l x); exact lt_0_1_dedekindreals).
         apply tr; exists 0; exact l.
       - apply (fst (lt_rational_dedekind_l 0 x)), (lower_cut_rounded x) in xpos.
-        strip_truncations; destruct xpos as [s [spos ls]].
+        revert xpos; apply Trunc_functor; intros [s [spos ls]].
         assert (PropHolds (0 < [1 / s])) by exact (fst (rational_dedekind_lt 0 _) (pos_quotient 1 s lt_0_1 spos)).
         assert (l : 1 < [1 / s] * x).
         { assert (p : [1 / s] * [s] = 1) by exact (quotient_mult_dedekind 1 s spos).
           rewrite <- p; apply (strictly_order_preserving ([1 / s] *.)), lt_rational_dedekind_l, ls. }
-        apply tr; exists (1 / s); exact l.
+        exists (1 / s); exact l.
       - exact pos_recip_lower_rounded.
       - exact pos_recip_upper_rounded.
       - intros q r l l'.
@@ -1554,13 +1547,14 @@ Section complete.
       : limit_lower q <-> hexists (fun q' => prod (q < q') (limit_lower q')).
     Proof.
       split.
-      - intros p; strip_truncations; destruct p as [e p]; strip_truncations; destruct p as [d p].
-        apply tr; exists (q + ' (d / 2)); split; [apply pos_plus_lt_compat_r, pos_is_pos|].
+      - intros p; strip_truncations; destruct p as [e p].
+        revert p; apply Trunc_functor; intros [d p].
+        exists (q + ' (d / 2)); split; [apply pos_plus_lt_compat_r, pos_is_pos|].
         apply tr; exists e; apply tr; exists (d / 2).
         rewrite plus_half_shift; exact p.
-      - intros p; strip_truncations; destruct p as [q' [l p]]; strip_truncations.
-        destruct p as [e p]; strip_truncations; destruct p as [d p].
-        apply tr; exists e; apply tr; exists d.
+      - intros p; strip_truncations; destruct p as [q' [l p]].
+        revert p; apply Trunc_functor; intros [e p]; exists e.
+        revert p; apply Trunc_functor; intros [d p]; exists d.
         apply (lower_cut_lt Q (x (M e)) _ (q' + ' e + ' d)); [|exact p].
         apply (strictly_order_preserving (+ ' d)), (strictly_order_preserving (+ ' e)), l.
     Qed.
@@ -1569,13 +1563,14 @@ Section complete.
       : limit_upper r <-> hexists (fun r' => prod (r' < r) (limit_upper r')).
     Proof.
       split.
-      - intros p; strip_truncations; destruct p as [e p]; strip_truncations; destruct p as [d p].
-        apply tr; exists (r - ' (d / 2)); split; [apply pos_minus_lt_compat_r, pos_is_pos|].
+      - intros p; strip_truncations; destruct p as [e p].
+        revert p; apply Trunc_functor; intros [d p].
+        exists (r - ' (d / 2)); split; [apply pos_minus_lt_compat_r, pos_is_pos|].
         apply tr; exists e; apply tr; exists (d / 2).
         rewrite minus_half_shift; exact p.
-      - intros p; strip_truncations; destruct p as [r' [l p]]; strip_truncations.
-        destruct p as [e p]; strip_truncations; destruct p as [d p].
-        apply tr; exists e; apply tr; exists d.
+      - intros p; strip_truncations; destruct p as [r' [l p]].
+        revert p; apply Trunc_functor; intros [e p]; exists e.
+        revert p; apply Trunc_functor; intros [d p]; exists d.
         apply (upper_cut_lt Q (x (M e)) _ (r' - ' e - ' d)); [|exact p].
         apply (strictly_order_preserving (+ - ' d)), (strictly_order_preserving (+ - ' e)), l.
     Qed.
@@ -1615,11 +1610,11 @@ Section complete.
     Lemma isdedekindcut_limit : IsDedekindCut Q limit_lower limit_upper.
     Proof.
       split.
-      - assert (a := cut_lower_inhabited (isdedekindcut Q (x (M 1)))); strip_truncations.
-        destruct a as [a la]; apply tr; exists (a - ' 1 - ' 1); apply tr; exists 1; apply tr; exists 1.
+      - generalize (cut_lower_inhabited (isdedekindcut Q (x (M 1)))); apply Trunc_functor.
+        intros [a la]; exists (a - ' 1 - ' 1); apply tr; exists 1; apply tr; exists 1.
         rewrite 2!minus_plus_cancel; exact la.
-      - assert (b := cut_upper_inhabited (isdedekindcut Q (x (M 1)))); strip_truncations.
-        destruct b as [b ub]; apply tr; exists (b + ' 1 + ' 1); apply tr; exists 1; apply tr; exists 1.
+      - generalize (cut_upper_inhabited (isdedekindcut Q (x (M 1)))); apply Trunc_functor.
+        intros [b ub]; exists (b + ' 1 + ' 1); apply tr; exists 1; apply tr; exists 1.
         rewrite 2!plus_minus_cancel; exact ub.
       - exact limit_lower_rounded.
       - exact limit_upper_rounded.
@@ -1649,9 +1644,8 @@ Section complete.
       -> limit_dedekind - x n <= [' (e / 2)].
     Proof.
       intros ln; apply le_iff_not_lt_flip; intros l.
-      apply flip_lt_minus_r in l.
-      assert (c := dedekindreals_archimedean Q _ _ l); strip_truncations.
-      destruct c as [r [lr lr']].
+      apply flip_lt_minus_r, (dedekindreals_archimedean Q) in l; strip_truncations.
+      destruct l as [r [lr lr']].
       rewrite plus_comm in lr; apply flip_lt_minus_r in lr.
       rewrite <- rational_dedekind_minus in lr; apply (fst (lt_rational_dedekind_r Q _ _)) in lr.
       apply (fst (lt_rational_dedekind_l Q r _)) in lr'; strip_truncations.
@@ -1670,9 +1664,8 @@ Section complete.
       -> x n - limit_dedekind <= [' (e / 2)].
     Proof.
       intros ln; apply le_iff_not_lt_flip; intros l.
-      apply flip_lt_minus_r in l.
-      assert (c := dedekindreals_archimedean Q _ _ l); strip_truncations.
-      destruct c as [r [lr lr']].
+      apply flip_lt_minus_r, (dedekindreals_archimedean Q) in l; strip_truncations.
+      destruct l as [r [lr lr']].
       apply (fst (lt_rational_dedekind_l Q r _)) in lr'.
       rewrite plus_comm in lr; apply flip_lt_minus_r in lr.
       rewrite <- rational_dedekind_minus in lr; apply (fst (lt_rational_dedekind_r Q _ _)) in lr.
