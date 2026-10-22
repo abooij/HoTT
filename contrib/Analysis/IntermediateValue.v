@@ -371,7 +371,7 @@ Section ivt.
   End weight.
 
   Section approximate.
-    Context `{Funext} {Fcomplete : IsComplete Q F}.
+    Context {Fcomplete : IsComplete Q F}.
     Context (f : F -> F) (a b : F) (leab : a ≤ b) (fa : f a < 0) (fb : 0 < f b) (e : Qpos Q).
 
     Local Notation dec := (bisect_weight f (e / 2)).
@@ -400,43 +400,10 @@ Section ivt.
                (bisect_width_le dec a b B leB) z (fun n => (reflexivity _, zw n))).
     Qed.
 
-    (** The common limit of the endpoints and midpoints of the bisection. *)
-    Definition approximate_root_islimit : {x : F & IsLimit Q F z x}.
-    Proof.
-      refine (limit_complete Q z _).
-      assert (B := merely_bound); strip_truncations; destruct B as [B leB].
-      exact (tr (_; cauchymodulus_bisect B leB)).
-    Defined.
-
-    Definition approximate_root : F := approximate_root_islimit.1.
-
-    (** The candidates for a point where [f] is close to [0]: the limit and the midpoints. *)
-    Definition approximate_candidate (n : nat) : F
-      := match n with
-         | O => approximate_root
-         | S n => c n
-         end.
-
-    (** The limit lies in all the intervals, and is also the limit of the upper endpoints and of the midpoints. *)
-    Local Definition approximate_root_between
-      := nested_limit_between z w zinc wdec zw _ approximate_root_islimit.2.
-
-    Local Lemma islimit_bisect_upper : IsLimit Q F w approximate_root.
-    Proof.
-      assert (B := merely_bound); strip_truncations; destruct B as [B leB].
-      exact (islimit_nested z w B half (pos_is_pos _) half_lt_1
-               (bisect_width_le dec a b B leB) w (fun n => (zw n, reflexivity _)) _
-               approximate_root_between).
-    Qed.
-
-    Local Lemma islimit_bisect_mid : IsLimit Q F c approximate_root.
-    Proof.
-      assert (B := merely_bound); strip_truncations; destruct B as [B leB].
-      exact (islimit_nested z w B half (pos_is_pos _) half_lt_1
-               (bisect_width_le dec a b B leB) c
-               (bisect_mid_between dec (bisect_weight_between f _) a b leab) _
-               approximate_root_between).
-    Qed.
+    (** Given a rational bound on the width of [[a, b]], the lower endpoints of the bisection converge. The type of limits is a proposition only under [Funext], so we compute the limit from such a bound rather than from its mere existence. *)
+    Definition approximate_root_islimit (B : Qpos Q) (leB : b - a ≤ ' (' B))
+      : {x : F & IsLimit Q F z x}
+      := is_complete Q F z _ (cauchymodulus_bisect B leB).
 
     (** A step of the bisection keeps [f] negative at the lower and positive at the upper endpoint, unless [f] is close to [0] at the midpoint: we compare [f (c m)] with [e / 2 < e] and [- e < - e / 2].  If [e / 2 < f (c m)], the weight is [1] and the next interval is the left half; if [f (c m) < - e / 2], the weight is [0] and the next interval is the right half. *)
     Local Lemma bisect_invariant_step (m : nat) (neg : f (z m) < 0) (pos : 0 < f (w m))
@@ -477,32 +444,66 @@ Section ivt.
 
     Context (cont : forall y, a ≤ y ≤ b -> IsContinuousAt Q F f y).
 
-    Local Definition cont_root := cont approximate_root (approximate_root_between 0).
+    (** We fix a limit [x] of the lower endpoints. *)
+    Section root.
+      Context (x : F) (islim : IsLimit Q F z x).
 
-    (** The approximate intermediate value theorem: [f] is less than [e] in absolute value at one of the candidates. Take [m] so large that [z m] and [w m] are close to the limit [x]. If [f] is close to [0] at some [c j], we are done. Otherwise [f (z m) < 0 < f (w m)], and [f x] is within [e] of both, so [f x] is close to [0]. *)
-    Lemma approximate_ivt_candidates
-      : hexists (fun n => - ' (' e) < f (approximate_candidate n) < ' (' e)).
+      (** The candidates for a point where [f] is close to [0]: the limit and the midpoints. *)
+      Definition approximate_candidate (n : nat) : F
+        := match n with
+           | O => x
+           | S n => c n
+           end.
+
+      (** The limit lies in all the intervals, and is also the limit of the upper endpoints and of the midpoints. *)
+      Local Definition approximate_root_between := nested_limit_between z w zinc wdec zw x islim.
+
+      Local Lemma islimit_bisect_upper : IsLimit Q F w x.
+      Proof.
+        intro d; assert (B := merely_bound); strip_truncations; destruct B as [B leB].
+        exact (islimit_nested z w B half (pos_is_pos _) half_lt_1
+                 (bisect_width_le dec a b B leB) w (fun n => (zw n, reflexivity _)) x
+                 approximate_root_between d).
+      Qed.
+
+      Local Lemma islimit_bisect_mid : IsLimit Q F c x.
+      Proof.
+        intro d; assert (B := merely_bound); strip_truncations; destruct B as [B leB].
+        exact (islimit_nested z w B half (pos_is_pos _) half_lt_1
+                 (bisect_width_le dec a b B leB) c
+                 (bisect_mid_between dec (bisect_weight_between f _) a b leab) x
+                 approximate_root_between d).
+      Qed.
+
+      Local Definition cont_root := cont x (approximate_root_between 0).
+
+      (** The approximate intermediate value theorem: [f] is less than [e] in absolute value at one of the candidates. Take [m] so large that [z m] and [w m] are close to the limit [x]. If [f] is close to [0] at some [c j], we are done. Otherwise [f (z m) < 0 < f (w m)], and [f x] is within [e] of both, so [f x] is close to [0]. *)
+      Lemma approximate_ivt_candidates
+        : hexists (fun n => - ' (' e) < f (approximate_candidate n) < ' (' e)).
+      Proof.
+        assert (d := cont_root e); strip_truncations; destruct d as [d close].
+        assert (N := islim d); assert (M := islimit_bisect_upper d).
+        strip_truncations; destruct N as [N zN], M as [M wM].
+        set (m := Nat.Core.nat_max N M).
+        assert (inv := bisect_invariant m); strip_truncations.
+        destruct inv as [[j [_ cj]]|[neg pos]].
+        1: exact (tr (S j; cj)).
+        apply tr; exists 0%nat; split.
+        - lhs' exact (fst (close (w m) (wM m (le_nat_max_r N M)))).
+          exact (fst (pos_minus_lt_compat_r _ _) pos).
+        - rhs_V' exact (snd (close (z m) (zN m (le_nat_max_l N M)))).
+          exact (fst (pos_plus_lt_compat_r _ _) (fst (flip_neg_negate _) neg)).
+      Qed.
+    End root.
+
+    (** Hence [f] merely takes values arbitrarily close to [0]: the width of [[a, b]] merely has a rational bound, which gives a limit of the bisection. *)
+    Definition approximate_ivt : hexists (fun y => - ' (' e) < f y < ' (' e)).
     Proof.
-      assert (d := cont_root e); strip_truncations; destruct d as [d close].
-      assert (N := approximate_root_islimit.2 d); assert (M := islimit_bisect_upper d).
-      strip_truncations; destruct N as [N zN], M as [M wM].
-      set (m := Nat.Core.nat_max N M).
-      assert (inv := bisect_invariant m); strip_truncations.
-      destruct inv as [[j [_ cj]]|[neg pos]].
-      1: exact (tr (S j; cj)).
-      apply tr; exists 0%nat; split.
-      - lhs' exact (fst (close (w m) (wM m (le_nat_max_r N M)))).
-        exact (fst (pos_minus_lt_compat_r _ _) pos).
-      - rhs_V' exact (snd (close (z m) (zN m (le_nat_max_l N M)))).
-        exact (fst (pos_plus_lt_compat_r _ _) (fst (flip_neg_negate _) neg)).
-    Qed.
-
-    (** Hence [f] merely takes values arbitrarily close to [0]. *)
-    Definition approximate_ivt
-      : hexists (fun y => - ' (' e) < f y < ' (' e))
-      := Trunc_functor (-1) (fun nc : {n : nat & - ' (' e) < f (approximate_candidate n) < ' (' e)}
-                               => (approximate_candidate nc.1; nc.2))
-           approximate_ivt_candidates.
+      assert (B := merely_bound); strip_truncations; destruct B as [B leB].
+      destruct (approximate_root_islimit B leB) as [x islim].
+      refine (Trunc_functor (-1) _ (approximate_ivt_candidates x islim)).
+      intros [n close]; exact (approximate_candidate x n; close).
+    Defined.
 
     (** *** Locators *)
 
@@ -534,40 +535,47 @@ Section ivt.
     Definition bisect_mid_locator (n : nat) : locator Q F (c n)
       := locator_mid (fst (bisect_locators n)) (snd (bisect_locators n)).
 
-    (** The limit of the bisection has a locator, as a limit of midpoints with locators. *)
-    Definition approximate_root_locator : locator Q F approximate_root.
+    (** The locators of the endpoints give a rational bound on the width of [[a, b]]. *)
+    Definition bisect_width_bound : {B : Qpos Q & b - a < ' (' B)}
+      := qpos_upper_bound Q F (plus lb (minus la)).
+
+    (** A limit of the bisection has a locator, as a limit of midpoints with locators. *)
+    Definition approximate_root_locator (x : F) (islim : IsLimit Q F z x) : locator Q F x.
     Proof.
-      destruct (qpos_upper_bound Q F (plus lb (minus la))) as [B ltB].
+      destruct bisect_width_bound as [B ltB].
       refine (locator_limit Q F (xs:=c) (M:=nested_modulus B half (pos_is_pos _) half_lt_1)
-                bisect_mid_locator islimit_bisect_mid).
+                bisect_mid_locator (islimit_bisect_mid x islim)).
       exact (cauchymodulus_nested z w zinc wdec B half (pos_is_pos _) half_lt_1
                (bisect_width_le dec a b B (lt_le _ _ ltB)) c
                (bisect_mid_between dec (bisect_weight_between f _) a b leab)).
     Defined.
 
-    Definition approximate_candidate_locator (n : nat)
-      : locator Q F (approximate_candidate n)
+    Definition approximate_candidate_locator (x : F) (islim : IsLimit Q F z x) (n : nat)
+      : locator Q F (approximate_candidate x n)
       := match n with
-         | O => approximate_root_locator
+         | O => approximate_root_locator x islim
          | S n => bisect_mid_locator n
          end.
 
   End approximate.
 
   (** If [f] lifts to locators and [a] and [b] have locators, we can find a point with a locator at which [f] is close to [0]. We search for one among the candidates [y] for [e / 2] at which the locator of [f y] locates [- e < f y] at [- e < - e / 2] and [f y < e] at [e / 2 < e]. *)
-  Definition approximate_ivt_locator `{Funext} {Fcomplete : IsComplete Q F}
+  Definition approximate_ivt_locator {Fcomplete : IsComplete Q F}
     (f : F -> F) (a b : F) (leab : a ≤ b) (fa : f a < 0) (fb : 0 < f b) (e : Qpos Q)
     (cont : forall y, a ≤ y ≤ b -> IsContinuousAt Q F f y)
     (lift : LiftsToLocators Q F f) (la : locator Q F a) (lb : locator Q F b)
     : {y : F & (locator Q F y * (- ' (' e) < f y < ' (' e)))%type}.
   Proof.
-    set (y := approximate_candidate f a b leab (e / 2)).
-    set (ly := approximate_candidate_locator f a b leab (e / 2) lift la lb).
+    destruct (bisect_width_bound a b la lb) as [B ltB].
+    destruct (approximate_root_islimit f a b leab (e / 2) B (lt_le _ _ ltB)) as [x islim].
+    set (y := approximate_candidate f a b (e / 2) x).
+    set (ly := approximate_candidate_locator f a b leab (e / 2) lift la lb x islim).
     set (l n := lift (y n) (ly n)).
     assert (lt1 : - ' e < - ' (e / 2)) by exact (snd (flip_lt_negate _ _) (qpos_half_lt e)).
     set (P n := (is_inl (l n _ _ lt1) * is_inr (l n _ _ (qpos_half_lt e)))%type).
     assert (inh : hexists P).
-    { refine (Trunc_functor (-1) _ (approximate_ivt_candidates f a b leab fa fb (e / 2) cont)).
+    { refine (Trunc_functor (-1) _
+                (approximate_ivt_candidates f a b leab fa fb (e / 2) cont x islim)).
       intros [n [lo hi]]; exists n; split.
       - apply is_inr_not_inl, lt_flip.
         rewrite (preserves_negate (f:=cast Q F)); exact lo.
