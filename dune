@@ -85,8 +85,18 @@
 
 ; Common flags for Rocq
 
+; Rocq enlarges the OCaml minor heap to 256MB unless OCAMLRUNPARAM is set.
+; Every rocq process then touches most of that memory, and the resulting page
+; faults dominate the system time of a library build made of many short
+; processes.  We use a 16MB minor heap instead, and a higher space overhead
+; than Rocq's 200 to reduce major GC work.  This makes a full build about 15%
+; faster while using less memory per process.  (Note that this setting
+; overrides any OCAMLRUNPARAM set by the user.)
+
 (env
  (dev
+  (env-vars
+   (OCAMLRUNPARAM s=2M,o=400,a=2))
   (rocq
    (rocqdoc_flags
     :standard
@@ -96,6 +106,8 @@
     --parse-comments)
    (flags -noinit -indices-matter -color on)))
  (_
+  (env-vars
+   (OCAMLRUNPARAM s=2M,o=400,a=2))
   (rocq
    (rocqdoc_flags
     :standard

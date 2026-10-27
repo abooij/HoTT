@@ -1,5 +1,10 @@
 # Keep configuration here: the generated rules inspect it before the late hook.
 TIMING ?= 1
 
+# Use a 16MB OCaml minor heap instead of Rocq's default of 256MB and a higher
+# space overhead, which makes a full build about 15% faster (see ./dune).
+OCAMLRUNPARAM ?= s=2M,o=400,a=2
+export OCAMLRUNPARAM
+
 COQDOCEXTRAFLAGS?=
 COQDOCFLAGS?=--interpolate --utf8 --no-externals --parse-comments $(COQDOCEXTRAFLAGS)
