@@ -82,7 +82,7 @@ jobs:
           sudo chown -R 1000:1000 .
           endGroup
           echo "::remove-matcher owner=coq-problem-matcher::" # remove problem matcher installed by Coq docker action, so we don't get duplicate warning annotations
-          make -j2
+          make -j$(nproc)
     - name: Revert permissions
       # to avoid a warning at cleanup time - https://github.com/coq-community/docker-coq-action#permissions
       if: ${{ always() }}
@@ -118,7 +118,7 @@ jobs:
           echo "::remove-matcher owner=coq-problem-matcher::" # remove problem matcher installed by Coq docker action, so we don't get duplicate warning annotations
           sudo apt-get -o Acquire::Retries=30 update -q
           sudo apt-get -o Acquire::Retries=30 install python3 python-is-python3 -y --allow-unauthenticated
-          etc/coq-scripts/github/reportify-coq.sh --errors ${{ matrix.extra-gh-reportify }} make TIMED=1 -j2 --output-sync
+          etc/coq-scripts/github/reportify-coq.sh --errors ${{ matrix.extra-gh-reportify }} make TIMED=1 -j$(nproc) --output-sync
 
     - name: Revert permissions
       # to avoid a warning at cleanup time - https://github.com/coq-community/docker-coq-action#permissions
@@ -246,9 +246,9 @@ jobs:
           # For some reason, we get a stackoverflow. So we are lax
           # with making these.
           ulimit -s unlimited
-          make svg-file-dep-graphs -k || true
+          make -j$(nproc) svg-file-dep-graphs -k || true
           ## Try to make again to see errors
-          make svg-file-dep-graphs -k || true
+          make -j$(nproc) svg-file-dep-graphs -k || true
           # `dot` hates file-dep-graphs/hott-all.dot, because it's too big, and
           # makes `dot` spin for over a dozen minutes.  So disable it for now.
           #make svg-aggregate-dep-graphs -k || exit $?
@@ -305,7 +305,7 @@ jobs:
           endGroup
           echo "::remove-matcher owner=coq-problem-matcher::" # remove problem matcher installed by Coq docker action, so we don't get duplicate warning annotations
           ## Make HTML doc
-          make -j2 html
+          make -j$(nproc) html
           mv html coqdoc-html
     - name: Revert permissions
       # to avoid a warning at cleanup time - https://github.com/coq-community/docker-coq-action#permissions
@@ -350,7 +350,7 @@ jobs:
           endGroup
           echo "::remove-matcher owner=coq-problem-matcher::" # remove problem matcher installed by Coq docker action, so we don't get duplicate warning annotations
           ## Make timing doc
-          make -j2 timing-html
+          make -j$(nproc) timing-html
     - name: Revert permissions
       # to avoid a warning at cleanup time - https://github.com/coq-community/docker-coq-action#permissions
       if: ${{ always() }}
