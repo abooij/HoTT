@@ -106,9 +106,8 @@ Section TruncType.
 
   #[export] Instance isset_HProp : IsHSet HProp := _.
 
-  #[export] Instance istrunc_sig_istrunc : forall n, IsTrunc n.+1 { A : Type & IsTrunc n A } | 0.
+  #[export] Instance istrunc_sig_istrunc n : IsTrunc n.+1 { A : Type & IsTrunc n A } | 0.
   Proof.
-    intro n.
     exact (istrunc_equiv_istrunc _ issig_trunctype^-1).
   Defined.
 

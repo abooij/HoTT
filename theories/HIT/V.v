@@ -285,9 +285,8 @@ Proof.
   - intro a; apply tr; exists a; auto.
 Defined.
 
-Lemma bisimulation_equiv_id : forall u v : V, (u = v) <~> (u ~~ v).
+Lemma bisimulation_equiv_id (u v : V) : (u = v) <~> (u ~~ v).
 Proof.
-  intros u v.
   apply equiv_iff_hprop.
   - intro p; exact (transport (fun x => u ~~ x) p (reflexive_bisimulation u)).
   - generalize u v.
@@ -602,15 +601,15 @@ Definition V_omega : V
 
 (** ** Axioms of set theory (theorem 10.5.8) *)
 
-Lemma not_mem_Vempty : forall x, ~ (x ∈ V_empty).
+Lemma not_mem_Vempty x : ~ (x ∈ V_empty).
 Proof.
-  intros x Hx. generalize Hx; apply Trunc_rec.
+  intros Hx. generalize Hx; apply Trunc_rec.
   intros [ff _]. exact ff.
 Qed.
 
-Lemma pairing : forall u v, hexists (fun w => forall x, x ∈ w <-> hor (x = u) (x = v)).
+Lemma pairing u v : hexists (fun w => forall x, x ∈ w <-> hor (x = u) (x = v)).
 Proof.
-  intros u v. apply tr. exists (V_pair u v).
+  apply tr. exists (V_pair u v).
   intro; split; apply (Trunc_functor (-1)).
   - intros [[|] p]; [left|right]; exact p^.
   - intros [p | p]; [exists true | exists false]; exact p^.
@@ -624,9 +623,9 @@ Proof.
     intros [n p]. exists (S n). rewrite p; auto.
 Qed.
 
-Lemma union : forall v, hexists (fun w => forall x, x ∈ w <-> hexists (fun u => x ∈ u * u ∈ v)).
+Lemma union v : hexists (fun w => forall x, x ∈ w <-> hexists (fun u => x ∈ u * u ∈ v)).
 Proof.
-  intro v. apply tr; exists (V_union v).
+  apply tr; exists (V_union v).
   intro x; split.
   - intro H. simpl in H. generalize H; apply (Trunc_functor (-1)).
     intros [[u' x'] p]; simpl in p.
@@ -643,9 +642,9 @@ Proof.
     apply tr. exists (u'; x'). exact px.
 Qed.
 
-Lemma function : forall u v, hexists (fun w => forall x, x ∈ w <-> V_is_func u v x).
+Lemma function u v : hexists (fun w => forall x, x ∈ w <-> V_is_func u v x).
 Proof.
-  intros u v. apply tr; exists (V_func u v).
+  apply tr; exists (V_func u v).
   assert (memb_u : u = set (@func_of_members u)) by exact (is_valid_presentation u).
   assert (memb_v : v = set (@func_of_members v)) by exact (is_valid_presentation v).
   intro phi; split.

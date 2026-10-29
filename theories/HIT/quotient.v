@@ -119,10 +119,10 @@ Section Equiv.
     apply quotient_path2.
   Defined.
 
-  Lemma classes_eq_related : forall x y,
+  Lemma classes_eq_related x y :
                                class_of R x = class_of R y -> R x y.
   Proof.
-    intros x y H'.
+    intros H'.
     pattern (R x y).
     eapply transport.
     - apply in_class_pr.

@@ -499,11 +499,11 @@ Section SeqColimitSumInd.
   Defined.
 
   (** The computation rule for the alternative induction rule. *)
-  Definition seq_colim_sum_ind_beta_glue : forall n a b,
+  Definition seq_colim_sum_ind_beta_glue n a b :
     apD seq_colim_sum_ind (ap (seq_colim_sum_to_sum_seq_colim B) (glue (sig_seq B) n _)) =
     t n a b.
   Proof.
-    intros n a b; pose (h := F_beta_glue n a b).
+    pose (h := F_beta_glue n a b).
     rewrite (Xi seq_colim_sum_ind (seq_colim_sum_to_sum_seq_colim_beta_glue B n a b)) in h.
     rewrite (Mu (glue _ n a) seq_colim_sum_ind (seq_colim_sum_ind_cur_beta_glue n a)) in h.
     rewrite concat_1p in h; exact (cancelL _ _ _ h).
@@ -523,11 +523,11 @@ Section SeqColimitSumRec.
     exact (seq_colim_sum_ind B _ e (fun n a b => transport_const _ _ @ t n a b)).
   Defined.
 
-  Definition seq_colim_sum_rec_beta_glue : forall n a b,
+  Definition seq_colim_sum_rec_beta_glue n a b :
     ap seq_colim_sum_rec (ap (seq_colim_sum_to_sum_seq_colim B) (glue (sig_seq B) n (a;b))) =
     t n a b.
   Proof.
-    intros n a b; srapply (cancelL _ _ _ ((apD_const _ _)^ @ _)).
+    srapply (cancelL _ _ _ ((apD_const _ _)^ @ _)).
     srapply seq_colim_sum_ind_beta_glue.
   Defined.
 

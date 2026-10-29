@@ -127,9 +127,8 @@ Section AssumeStuff.
       apply graph_succ_top.
     Qed.
 
-    Local Definition Ha@{} : forall x, is_inl (f (inl x)).
+    Local Definition Ha@{} x : is_inl (f (inl x)).
     Proof.
-      intros x.
       apply graph_succ_not_top_unique.
       rewrite <- (eisretr f (inr tt)).
       intros ed.
@@ -298,10 +297,10 @@ Section AssumeStuff.
                                 (Ps' A ((equiv_smalltype (P' A)) P'A))).
   Qed.
 
-  Local Instance ishprop_graph_zero_or_succ@{} : forall n : Graph,
+  Local Instance ishprop_graph_zero_or_succ@{} (n : Graph) :
       IsHProp ((n = graph_zero) + { m : N & n = graph_succ m.1 }).
   Proof.
-    intros n. apply ishprop_sum@{u p p}.
+    apply ishprop_sum@{u p p}.
     - apply (@istrunc_equiv_istrunc _ _ (equiv_path_inverse _ _)),ishprop_path_graph_in_N.
       exact zero.2.
     - apply @ishprop_sigma_disjoint.
@@ -313,10 +312,10 @@ Section AssumeStuff.
       apply zero_neq_succ with m, path_N. path_via n.
   Qed.
 
-  Local Instance ishprop_N_zero_or_succ@{} : forall n : N,
+  Local Instance ishprop_N_zero_or_succ@{} (n : N) :
       IsHProp ((n = zero) + { m : N & n = succ m }).
   Proof.
-    intros n. apply ishprop_sum.
+    apply ishprop_sum.
     - exact _.
     - apply ishprop_sigma_disjoint. intros x y ex ey.
       apply succ_inj;path_via n.

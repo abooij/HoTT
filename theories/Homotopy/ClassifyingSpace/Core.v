@@ -336,9 +336,9 @@ Section EncodeDecode.
       apply associativity.
   Defined.
 
-  Local Definition encode : forall b, bbase = b -> codes b.
+  Local Definition encode b : bbase = b -> codes b.
   Proof.
-    intros b p.
+    intros p.
     exact (transport codes p mon_unit).
   Defined.
 
@@ -367,9 +367,8 @@ Section EncodeDecode.
       apply ap, codes_transport.
   Defined.
 
-  Local Lemma decode_encode : forall b p, decode b (encode b p) = p.
+  Local Lemma decode_encode b p : decode b (encode b p) = p.
   Proof.
-    intros b p.
     destruct p.
     exact bloop_id.
   Defined.
