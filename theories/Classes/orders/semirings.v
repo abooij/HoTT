@@ -20,9 +20,9 @@ Section semiring_order.
   - exact order_reflecting_flip.
   Qed.
 
-  #[export] Instance plus_ordered_cancel_l : forall z, LeftCancellation (+) z.
+  #[export] Instance plus_ordered_cancel_l z : LeftCancellation (+) z.
   Proof.
-  intros z x y E.
+  intros x y E.
   apply (antisymmetry (≤)); apply (order_reflecting (z+)); apply eq_le;trivial.
   apply symmetry;trivial.
   Qed.
@@ -97,10 +97,10 @@ Section semiring_order.
   trivial.
   Qed.
 
-  #[export] Instance nonneg_mult_le_l : forall (z : R), PropHolds (0 ≤ z) ->
+  #[export] Instance nonneg_mult_le_l (z : R) : PropHolds (0 ≤ z) ->
     OrderPreserving (z *.).
   Proof.
-  intros z E.
+  intros E.
   repeat (split; try exact _).
   intros x y F.
   destruct (decompose_le F) as [a [Ea1 Ea2]].
@@ -257,10 +257,10 @@ Section strict_semiring_order.
   rewrite <-Ez, rings.plus_0_r. trivial.
   Qed.
 
-  #[export] Instance pos_mult_lt_l : forall (z : R), PropHolds (0 < z) ->
+  #[export] Instance pos_mult_lt_l (z : R) : PropHolds (0 < z) ->
     StrictlyOrderPreserving (z *.).
   Proof.
-  intros z E x y F.
+  intros E x y F.
   destruct (decompose_lt F) as [a [Ea1 Ea2]].
   rewrite Ea2, plus_mult_distr_l.
   apply pos_plus_lt_compat_r.
@@ -602,9 +602,9 @@ Section full_pseudo_semiring_order.
     destruct (neg_mult_decompose x y E) as [[? ?]|[? ?]];auto.
   Qed.
 
-  #[export] Instance orderreflecting_left_mult : forall (z : R), PropHolds (0 < z) -> OrderReflecting (z *.).
+  #[export] Instance orderreflecting_left_mult (z : R) : PropHolds (0 < z) -> OrderReflecting (z *.).
   Proof.
-  intros z E. exact full_pseudo_order_reflecting.
+  intros E. exact full_pseudo_order_reflecting.
   Qed.
 
   #[export] Instance orderreflecting_right_mult : forall (z : R), PropHolds (0 < z) -> OrderReflecting (.* z).
@@ -776,9 +776,9 @@ Section full_pseudo_semiring_order.
     + exact IHn.
   Qed.
 
-  Lemma repeat_nat_pos : forall n, 0 < Core.nat_iter (S n) (plus 1) 0.
+  Lemma repeat_nat_pos n : 0 < Core.nat_iter (S n) (plus 1) 0.
   Proof.
-  intros n. simpl.
+  simpl.
   apply pos_plus_le_lt_compat_l.
   - solve_propholds.
   - apply repeat_nat_nonneg.

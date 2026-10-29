@@ -75,9 +75,8 @@ intros P P0 Psuc. apply induction; trivial.
   trivial.
 Qed.
 
-#[export] Instance slow_int_le_dec : forall x y: Z, Decidable (x ≤ y) | 10.
+#[export] Instance slow_int_le_dec (x y : Z) : Decidable (x ≤ y) | 10.
 Proof.
-intros x y.
 (* otherwise Z_le gets defined using peano.nat_ring
    but we only know order_reflecting when using naturals.nat_ring *)
 pose (naturals_ring) as E0.

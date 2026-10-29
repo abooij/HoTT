@@ -83,9 +83,9 @@ rewrite (mult_comm (den r1)), (associativity (num r2)).
 apply symmetry;apply plus_mult_distr_r.
 Qed.
 
-Lemma pl_comm@{} : forall q r, equiv (pl q r) (pl r q).
+Lemma pl_comm@{} q r : equiv (pl q r) (pl r q).
 Proof.
-intros q r;unfold equiv;simpl.
+unfold equiv;simpl.
 rewrite (mult_comm (den r)), plus_comm. reflexivity.
 Qed.
 
@@ -403,14 +403,14 @@ Proof.
 apply classes_eq_related@{UR UR Ularge UR Ularge};apply _.
 Qed.
 
-Lemma class_neq@{} : forall q r, ~ (equiv q r) -> ' q <> ' r.
+Lemma class_neq@{} q r : ~ (equiv q r) -> ' q <> ' r.
 Proof.
-intros q r E1 E2;apply E1;apply classes_eq_related, E2.
+intros E1 E2;apply E1;apply classes_eq_related, E2.
 Qed.
 
-Lemma classes_neq_related@{} : forall q r, ' q <> ' r -> ~ (equiv q r).
+Lemma classes_neq_related@{} q r : ' q <> ' r -> ~ (equiv q r).
 Proof.
-intros q r E1 E2;apply E1,path,E2.
+intros E1 E2;apply E1,path,E2.
 Qed.
 
 Lemma dec_recip_0@{} : / 0 = 0.
@@ -422,9 +422,9 @@ destruct (decide_rel paths 0 0) as [_|E].
 - destruct E;reflexivity.
 Qed.
 
-Lemma dec_recip_nonzero_aux@{} : forall q, ' q <> 0 -> num q <> 0.
+Lemma dec_recip_nonzero_aux@{} q : ' q <> 0 -> num q <> 0.
 Proof.
-intros q E;apply classes_neq_related in E.
+intros E;apply classes_neq_related in E.
 apply Frac.nonzero_num in E. trivial.
 Qed.
 
@@ -451,9 +451,8 @@ split;try apply _.
   apply mult_comm.
 Qed.
 
-Lemma dec_class@{} : forall q r, Decidable (class q = class r).
+Lemma dec_class@{} q r : Decidable (class q = class r).
 Proof.
-intros q r.
 destruct (dec (equiv q r)) as [E|E].
 - left. apply path,E.
 - right. intros E'.

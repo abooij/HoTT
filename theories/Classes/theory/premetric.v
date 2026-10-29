@@ -492,9 +492,9 @@ Context {A:Type@{UA} } `{Closeness A} `{forall e, Reflexive (close (A:=A) e)}.
 Universe UB.
 Context {B:Type@{UB} } `{Closeness B} `{forall e, Reflexive (close (A:=B) e)}.
 
-#[export] Instance pair_nonexpanding_l : forall x, NonExpanding (@pair A B x).
+#[export] Instance pair_nonexpanding_l x : NonExpanding (@pair A B x).
 Proof.
-intros x e u v xi;split;simpl.
+intros e u v xi;split;simpl.
 - reflexivity.
 - exact xi.
 Qed.
@@ -750,10 +750,10 @@ apply Q_triangular_one with v.
 - trivial.
 Qed.
 
-Lemma Qclose_separating_not_lt : forall q r : Q, (forall e, close e q r) ->
+Lemma Qclose_separating_not_lt (q r : Q) : (forall e, close e q r) ->
   ~ (q < r).
 Proof.
-intros q r E1 E2.
+intros E1 E2.
 pose proof (E1 (Qpos_diff _ _ E2)) as E3.
 apply symmetry in E3;apply Qclose_alt in E3.
 unfold cast in E3;simpl in E3.
@@ -832,9 +832,9 @@ apply le_lt_trans with (abs (q - r));trivial.
 apply Qabs_triangle_alt.
 Qed.
 
-Instance Qmeet_nonexpanding_l : forall s : Q, NonExpanding (⊓ s).
+Instance Qmeet_nonexpanding_l (s : Q) : NonExpanding (⊓ s).
 Proof.
-intros s e q r xi.
+intros e q r xi.
 apply Qclose_alt;apply Qclose_alt in xi.
 apply le_lt_trans with (abs (q - r));trivial. clear xi.
 destruct (total le q s) as [E1|E1], (total le r s) as [E2|E2];
@@ -855,17 +855,17 @@ rewrite ?(meet_l _ _ E1), ?(meet_r _ _ E1), ?(meet_l _ _ E2), ?(meet_r _ _ E2).
   apply Qabs_nonneg.
 Qed.
 
-Instance Qmeet_nonexpanding_r : forall s : Q, NonExpanding (s ⊓).
+Instance Qmeet_nonexpanding_r (s : Q) : NonExpanding (s ⊓).
 Proof.
-intros s e q r xi.
+intros e q r xi.
 pose proof meet_sl_order_meet_sl.
 rewrite !(commutativity s).
 apply (non_expanding (fun x => meet x s)). trivial.
 Qed.
 
-Instance Qjoin_nonexpanding_l : forall s : Q, NonExpanding (⊔ s).
+Instance Qjoin_nonexpanding_l (s : Q) : NonExpanding (⊔ s).
 Proof.
-intros s e q r xi.
+intros e q r xi.
 apply Qclose_alt;apply Qclose_alt in xi.
 apply le_lt_trans with (abs (q - r));trivial. clear xi.
 destruct (total le q s) as [E1|E1], (total le r s) as [E2|E2];
@@ -887,17 +887,17 @@ rewrite ?(join_l _ _ E1), ?(join_r _ _ E1), ?(join_l _ _ E2), ?(join_r _ _ E2).
 - reflexivity.
 Qed.
 
-Instance Qjoin_nonexpanding_r : forall s : Q, NonExpanding (s ⊔).
+Instance Qjoin_nonexpanding_r (s : Q) : NonExpanding (s ⊔).
 Proof.
-intros s e q r xi.
+intros e q r xi.
 pose proof join_sl_order_join_sl.
 rewrite !(commutativity s).
 apply (non_expanding (fun x => join x s)). trivial.
 Qed.
 
-Instance Qmult_lipschitz@{} : forall q : Q, Lipschitz (q *.) (pos_of_Q q).
+Instance Qmult_lipschitz@{} (q : Q) : Lipschitz (q *.) (pos_of_Q q).
 Proof.
-intros q e x y xi.
+intros e x y xi.
 apply Qclose_alt.
 rewrite negate_mult_distr_r,<-plus_mult_distr_l,Qabs_mult.
 apply pos_mult_le_lt_compat;try split.
@@ -956,9 +956,9 @@ Universe UA.
 Context {A : Type@{UA} } {Aclose : Closeness A}.
 Context `{!PreMetric A}.
 
-Lemma limit_unique : forall x l1 l2, IsLimit x l1 -> IsLimit x l2 -> l1 = l2.
+Lemma limit_unique x l1 l2 : IsLimit x l1 -> IsLimit x l2 -> l1 = l2.
 Proof.
-intros x l1 l2 E1 E2.
+intros E1 E2.
 apply separated.
 intros e. rewrite (pos_split2 e),(pos_split2 (e/2)).
 apply triangular with (x (e / 2 / 2));[symmetry;apply E1|apply E2].

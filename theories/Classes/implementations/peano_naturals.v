@@ -51,9 +51,9 @@ Proof.
   - apply (ap S), IHa.
 Qed.
 
-Lemma add_S_r : forall a b, a + S b =N= S (a + b).
+Lemma add_S_r a b : a + S b =N= S (a + b).
 Proof.
-  intros a b; induction a as [| a IHa].
+  induction a as [| a IHa].
   - reflexivity.
   - apply (ap S), IHa.
 Qed.
@@ -273,10 +273,10 @@ induction k.
 - simpl_nat. constructor. assumption.
 Qed.
 
-Lemma le_exists : forall n m : nat,
+Lemma le_exists (n m : nat) :
   iff@{N N N} (n <= m) (sig@{N N} (fun k => m =N= k + n)).
 Proof.
-intros n m;split.
+split.
 - intros E;induction E as [|m E IH].
   + exists 0;split.
   + destruct IH as [k IH].
@@ -323,9 +323,9 @@ induction a as [|a IHa].
     * right. apply le_S_S. trivial.
 Defined.
 
-Lemma not_lt_0 : forall a, ~ (a < 0).
+Lemma not_lt_0 a : ~ (a < 0).
 Proof.
-intros a E. apply le_exists in E.
+intros E. apply le_exists in E.
 destruct E as [k E].
 apply natpaths_symm,plus_eq_zero in E.
 exact (S_neq_0 _ (snd E)).
@@ -470,9 +470,9 @@ destruct (le_lt_dec b a);auto.
 destruct E;auto.
 Qed.
 
-Lemma nat_lt_not_le : forall a b : nat, a < b -> ~ (b <= a).
+Lemma nat_lt_not_le (a b : nat) : a < b -> ~ (b <= a).
 Proof.
-intros a b E1 E2.
+intros E1 E2.
 apply le_exists in E1;apply le_exists in E2.
 destruct E1 as [k1 E1], E2 as [k2 E2].
 apply (S_neq_0 (k1 + k2)).
@@ -504,17 +504,17 @@ intros [|a] E.
 - apply S_gt_0.
 Qed.
 
-Lemma nat_le_lt_trans : forall a b c : nat, a <= b -> b < c -> a < c.
+Lemma nat_le_lt_trans (a b c : nat) : a <= b -> b < c -> a < c.
 Proof.
-intros a b c E1 E2.
+intros E1 E2.
 apply le_exists in E1;apply le_exists in E2.
 destruct E1 as [k1 E1],E2 as [k2 E2];rewrite E2,E1.
 rewrite add_S_r,add_assoc. apply le_S_S,le_plus.
 Qed.
 
-Lemma lt_strong_cotrans : forall a b : nat, a < b -> forall c, a < c |_| c < b.
+Lemma lt_strong_cotrans (a b : nat) : a < b -> forall c, a < c |_| c < b.
 Proof.
-intros a b E1 c.
+intros E1 c.
 destruct (le_lt_dec c a) as [E2|E2].
 - right. apply nat_le_lt_trans with a;trivial.
 - left;trivial.
@@ -682,9 +682,9 @@ intros a b;revert a;induction b as [|b IH].
     rewrite add_S_r,<-add_S_l;apply IH.
 Qed.
 
-Lemma le_plus_minus : forall n m : nat, n <= m -> m =N= (n + (cut_minus m  n)).
+Lemma le_plus_minus (n m : nat) : n <= m -> m =N= (n + (cut_minus m  n)).
 Proof.
-intros n m E. apply le_exists in E.
+intros E. apply le_exists in E.
 destruct E as [k E];rewrite E.
 rewrite plus_minus. apply add_comm.
 Qed.

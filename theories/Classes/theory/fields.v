@@ -82,9 +82,9 @@ repeat (split; try exact _); intros x y E.
   rewrite mult_1_l,mult_1_r. apply symmetry;trivial.
 Qed.
 
-#[export] Instance strongleftcancellation_plus_field: forall z, StrongLeftCancellation (+) z.
+#[export] Instance strongleftcancellation_plus_field z : StrongLeftCancellation (+) z.
 Proof.
-intros z x y E. apply (strong_extensionality (+ -z)).
+intros x y E. apply (strong_extensionality (+ -z)).
 do 2 rewrite (commutativity (f:=plus) z _),
   <-simple_associativity,right_inverse,plus_0_r.
 trivial.
@@ -95,9 +95,9 @@ Proof.
 intros. exact (strong_right_cancel_from_left (+)).
 Qed.
 
-#[export] Instance strongleftcancellation_mult_field : forall z, PropHolds (z ≶ 0) -> StrongLeftCancellation (.*.) z.
+#[export] Instance strongleftcancellation_mult_field z : PropHolds (z ≶ 0) -> StrongLeftCancellation (.*.) z.
 Proof.
-intros z Ez x y E. red in Ez.
+intros Ez x y E. red in Ez.
 rewrite !(commutativity z).
 apply (strong_extensionality (.* // (z;(Ez : (≶0) z)))).
 rewrite <-!simple_associativity, !reciperse_alt.

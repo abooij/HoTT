@@ -369,9 +369,9 @@ Section full_pseudo_order.
     := ltac:(first [exact fullpseudo_fullpartial'@{i i Set Set Set}|
                     exact fullpseudo_fullpartial'@{i i}]).
 
-  #[export] Instance le_stable : forall x y, Stable (x ≤ y).
+  #[export] Instance le_stable x y : Stable (x ≤ y).
   Proof.
-  intros x y. unfold Stable.
+  unfold Stable.
   intros dn. apply le_iff_not_lt_flip.
   intros E. apply dn.
   intros E';apply le_iff_not_lt_flip in E';auto.

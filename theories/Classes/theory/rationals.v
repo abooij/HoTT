@@ -261,10 +261,10 @@ apply pos_eq;apply Q_sum_eq_join_meet.
 change (' a + ' b) with (' (a + b)). rewrite E;reflexivity.
 Qed.
 
-Lemma Qpos_le_lt_min : forall a b : Q+, ' a <= ' b ->
+Lemma Qpos_le_lt_min (a b : Q+) : ' a <= ' b ->
   exists c ca cb, a = c + ca /\ b = c + cb.
 Proof.
-intros a b E. exists (a/2),(a/2).
+intros E. exists (a/2),(a/2).
 simple refine (exist _ _ _);simpl.
 - exists (' (a / 2) + (' b - ' a)).
   apply nonneg_plus_lt_compat_r.
@@ -288,15 +288,15 @@ destruct (total le (' a) (' b)) as [E|E].
   exists c,ca,cb;auto.
 Qed.
 
-Definition Qpos_diff : forall q r : Q, q < r -> Q+.
+Definition Qpos_diff (q r : Q) : q < r -> Q+.
 Proof.
-intros q r E;exists (r-q).
+intros E;exists (r-q).
 exact (snd (flip_pos_minus _ _) E).
 Defined.
 
-Lemma Qpos_diff_pr@{} : forall q r E, r = q + ' (Qpos_diff q r E).
+Lemma Qpos_diff_pr@{} q r E : r = q + ' (Qpos_diff q r E).
 Proof.
-intros q r E. exact (plus_conjugate_alt r q).
+exact (plus_conjugate_alt r q).
 Qed.
 
 
@@ -309,25 +309,25 @@ intros. destruct (total le b c) as [E|E].
   apply (order_preserving (a +)),E.
 Qed.
 
-Lemma Qabs_nonneg@{} : forall q : Q, 0 <= abs q.
+Lemma Qabs_nonneg@{} (q : Q) : 0 <= abs q.
 Proof.
-intros q;destruct (total_abs_either q) as [E|E];destruct E as [E1 E2];rewrite E2.
+destruct (total_abs_either q) as [E|E];destruct E as [E1 E2];rewrite E2.
 - trivial.
 - apply flip_nonneg_negate.
  rewrite involutive;trivial.
 Qed.
 
-Lemma Qabs_nonpos_0@{} : forall q : Q, abs q <= 0 -> q = 0.
+Lemma Qabs_nonpos_0@{} (q : Q) : abs q <= 0 -> q = 0.
 Proof.
-intros q E. pose proof (antisymmetry le _ _ E (Qabs_nonneg _)) as E1.
+intros E. pose proof (antisymmetry le _ _ E (Qabs_nonneg _)) as E1.
 destruct (total_abs_either q) as [[E2 E3]|[E2 E3]];rewrite E3 in E1.
 - trivial.
 - apply (injective (-)). rewrite negate_0. trivial.
 Qed.
 
-Lemma Qabs_0_or_pos : forall q : Q, q = 0 |_| 0 < abs q.
+Lemma Qabs_0_or_pos (q : Q) : q = 0 |_| 0 < abs q.
 Proof.
-intros q. destruct (le_or_lt (abs q) 0) as [E|E].
+destruct (le_or_lt (abs q) 0) as [E|E].
 - left. apply Qabs_nonpos_0. trivial.
 - right. trivial.
 Qed.
@@ -342,30 +342,30 @@ Proof.
 intro;apply ((abs_sig _).2).
 Qed.
 
-Lemma Qabs_le_raw@{} : forall x : Q, x <= abs x.
+Lemma Qabs_le_raw@{} (x : Q) : x <= abs x.
 Proof.
-intros x;destruct (total_abs_either x) as [[E1 E2]|[E1 E2]].
+destruct (total_abs_either x) as [[E1 E2]|[E1 E2]].
 - rewrite E2;reflexivity.
 - transitivity (0:Q);trivial.
   rewrite E2. apply flip_nonpos_negate. trivial.
 Qed.
 
-Lemma Qabs_neg@{} : forall x : Q, abs (- x) = abs x.
+Lemma Qabs_neg@{} (x : Q) : abs (- x) = abs x.
 Proof.
-intros x. destruct (total_abs_either x) as [[E1 E2]|[E1 E2]].
+destruct (total_abs_either x) as [[E1 E2]|[E1 E2]].
 - rewrite E2. path_via (- - x);[|rewrite involutive;trivial].
   apply ((abs_sig (- x)).2). apply flip_nonneg_negate;trivial.
 - rewrite E2. apply ((abs_sig (- x)).2). apply flip_nonpos_negate;trivial.
 Qed.
 
-Lemma Qabs_le_neg_raw : forall x : Q, - x <= abs x.
+Lemma Qabs_le_neg_raw (x : Q) : - x <= abs x.
 Proof.
-intros x. rewrite <-Qabs_neg. apply Qabs_le_raw.
+rewrite <-Qabs_neg. apply Qabs_le_raw.
 Qed.
 
-Lemma Q_abs_le_pr@{} : forall x y : Q, abs x <= y <-> - y <= x /\ x <= y.
+Lemma Q_abs_le_pr@{} (x y : Q) : abs x <= y <-> - y <= x /\ x <= y.
 Proof.
-intros x y;split.
+split.
 - intros E. split.
   + apply flip_le_negate. rewrite involutive. transitivity (abs x);trivial.
     apply Qabs_le_neg_raw.
@@ -377,9 +377,9 @@ intros x y;split.
   + apply flip_le_negate;rewrite involutive;trivial.
 Qed.
 
-Lemma Qabs_is_join@{} : forall q : Q, abs q = join (- q) q.
+Lemma Qabs_is_join@{} (q : Q) : abs q = join (- q) q.
 Proof.
-intros q. symmetry.
+symmetry.
 destruct (total_abs_either q) as [[E1 E2]|[E1 E2]];rewrite E2.
 - apply join_r. transitivity (0:Q);trivial.
   apply flip_nonneg_negate;trivial.
@@ -387,10 +387,10 @@ destruct (total_abs_either q) as [[E1 E2]|[E1 E2]];rewrite E2.
   apply flip_nonpos_negate;trivial.
 Qed.
 
-Lemma Qlt_join : forall a b c : Q, a < c -> b < c ->
+Lemma Qlt_join (a b c : Q) : a < c -> b < c ->
   join a b < c.
 Proof.
-intros a b c E1 E2.
+intros E1 E2.
 destruct (total le a b) as [E3|E3];rewrite ?(join_r _ _ E3),?(join_l _ _ E3);
 trivial.
 Qed.
@@ -434,9 +434,9 @@ Proof.
   reflexivity.
 Qed.
 
-Lemma Q_average_between@{} : forall q r : Q, q < r -> q < (q + r) / 2 < r.
+Lemma Q_average_between@{} (q r : Q) : q < r -> q < (q + r) / 2 < r.
 Proof.
-intros q r E.
+intros E.
 assert (pos : 0 < (r - q) / 2).
 { apply pos_mult_compat;[|exact _].
   red. apply (snd (flip_pos_minus q r)). trivial. }
@@ -516,14 +516,13 @@ apply join_le.
 - apply Qabs_triangle_alt_aux.
 Qed.
 
-Lemma Q_dense@{} : forall q r : Q, q < r -> exists s, q < s < r.
+Lemma Q_dense@{} (q r : Q) : q < r -> exists s, q < s < r.
 Proof.
-intros q r E;econstructor;apply Q_average_between,E.
+intros E;econstructor;apply Q_average_between,E.
 Qed.
 
-Lemma Qabs_neg_flip@{} : forall a b : Q, abs (a - b) = abs (b - a).
+Lemma Qabs_neg_flip@{} (a b : Q) : abs (a - b) = abs (b - a).
 Proof.
-intros a b.
 rewrite <-Qabs_neg. rewrite <-negate_swap_r. trivial.
 Qed.
 
@@ -546,9 +545,8 @@ intros. change (- (abs q + 1) ≤ q ≤ (abs q + 1)). split.
   + apply nonneg_plus_le_compat_r. solve_propholds.
 Qed.
 
-Lemma Qabs_mult@{} : forall a b : Q, abs (a * b) = abs a * abs b.
+Lemma Qabs_mult@{} (a b : Q) : abs (a * b) = abs a * abs b.
 Proof.
-intros a b.
 destruct (total_abs_either a) as [Ea|Ea];destruct Ea as [Ea1 Ea2];rewrite Ea2;
 destruct (total_abs_either b) as [Eb|Eb];destruct Eb as [Eb1 Eb2];rewrite Eb2.
 - apply ((abs_sig (a*b)).2). apply nonneg_mult_compat;trivial.
@@ -560,9 +558,9 @@ destruct (total_abs_either b) as [Eb|Eb];destruct Eb as [Eb1 Eb2];rewrite Eb2.
   apply nonpos_mult;trivial.
 Qed.
 
-Lemma Qpos_neg_le@{} : forall a : Q+, - ' a <= ' a.
+Lemma Qpos_neg_le@{} (a : Q+) : - ' a <= ' a.
 Proof.
-intros a;apply between_nonneg;solve_propholds.
+apply between_nonneg;solve_propholds.
 Qed.
 
 Definition Qpos_upper (e : Q+) := exists x : Q, ' e <= x.
@@ -572,17 +570,17 @@ Proof.
 intros x. exists (join x (' e)). apply join_ub_r.
 Defined.
 
-#[export] Instance QLe_dec : forall q r : Q, Decidable (q <= r).
+#[export] Instance QLe_dec (q r : Q) : Decidable (q <= r).
 Proof.
-intros q r;destruct (le_or_lt q r).
+destruct (le_or_lt q r).
 - left;trivial.
 - right;intros ?. apply (irreflexivity lt q).
   apply le_lt_trans with r;trivial.
 Qed.
 
-#[export] Instance QLt_dec : forall q r : Q, Decidable (q < r).
+#[export] Instance QLt_dec (q r : Q) : Decidable (q < r).
 Proof.
-intros q r;destruct (le_or_lt r q).
+destruct (le_or_lt r q).
 - right;intros ?. apply (irreflexivity lt q).
   apply lt_le_trans with r;trivial.
 - left;trivial.

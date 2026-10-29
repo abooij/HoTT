@@ -86,10 +86,10 @@ rewrite (plus_comm (neg q1)). rewrite !plus_assoc.
 reflexivity.
 Qed.
 
-Lemma ml_respects : forall q1 q2, equiv q1 q2 -> forall r1 r2, equiv r1 r2 ->
+Lemma ml_respects q1 q2 : equiv q1 q2 -> forall r1 r2, equiv r1 r2 ->
   equiv (q1 * r1) (q2 * r2).
 Proof.
-intros q1 q2 Eq r1 r2 Er. transitivity (q1 * r2);unfold equiv in *;simpl.
+intros Eq r1 r2 Er. transitivity (q1 * r2);unfold equiv in *;simpl.
 - transitivity (pos q1 * (pos r1 + neg r2) + neg q1 * (neg r1 + pos r2)).
   + rewrite 2!plus_mult_distr_l.
     rewrite <-2!plus_assoc.
@@ -374,10 +374,9 @@ Definition Z_rec2_compute {T sT} dclass dequiv x y
   : @Z_rec2 T sT dclass dequiv (' x) (' y) = dclass x y
   := 1.
 
-Lemma dec_Z_of_pair `{DecidablePaths N} : forall q r : PairT.T N,
+Lemma dec_Z_of_pair `{DecidablePaths N} (q r : PairT.T N) :
   Decidable (' q = ' r).
 Proof.
-intros q r.
 destruct (dec (PairT.equiv q r)) as [E|E].
 - left. apply Z_path,E.
 - right. intros E'.

@@ -56,9 +56,9 @@ rewrite transport_path_universe, ?transport_path_universe_V.
 - exact preserves_1.
 Qed.
 
-Lemma iso_leibnitz : forall P : Operations -> Type, P A -> P B.
+Lemma iso_leibnitz (P : Operations -> Type) : P A -> P B.
 Proof.
-intros P;apply transport.
+apply transport.
 (* Coq pre 8.8 produces phantom universes, see GitHub Coq/Coq#1033. *)
 first [exact iso_same_semirings|exact iso_same_semirings@{V V}].
 Qed.
@@ -125,9 +125,9 @@ rewrite transport_path_universe, ?transport_path_universe_V.
   apply ap,eisretr.
 Qed.
 
-Lemma iso_leibnitz : forall P : Operations -> Type, P A -> P B.
+Lemma iso_leibnitz (P : Operations -> Type) : P A -> P B.
 Proof.
-intros P;apply transport.
+apply transport.
 (* Coq pre 8.8 produces phantom universes, see GitHub Coq/Coq#1033. *)
 first [exact iso_same_rings|exact iso_same_rings@{V V}].
 Qed.

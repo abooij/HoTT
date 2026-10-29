@@ -391,10 +391,10 @@ Section ring_props.
 
   Context `{!NoZeroDivisors R} `{forall x y:R, Stable (x = y)}.
 
-  #[export] Instance mult_left_cancel:  forall z, PropHolds (z <> 0) ->
+  #[export] Instance mult_left_cancel z : PropHolds (z <> 0) ->
     LeftCancellation (.*.) z.
   Proof.
-  intros z z_nonzero x y E.
+  intros z_nonzero x y E.
   apply stable.
   intro U.
   apply (mult_ne_0 z (x - y) (is_ne_0 z)).

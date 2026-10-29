@@ -37,9 +37,9 @@ Section group_props.
     apply symmetry, right_identity.
   Qed.
 
-  #[export] Instance group_cancelL : forall z : G, LeftCancellation (.*.) z.
+  #[export] Instance group_cancelL (z : G) : LeftCancellation (.*.) z.
   Proof.
-    intros z x y E.
+    intros x y E.
     rhs_V rapply left_identity.
     rhs_V exact (ap (.* y) (left_inverse z)).
     rhs_V rapply simple_associativity.
@@ -50,9 +50,9 @@ Section group_props.
     apply left_identity.
   Defined.
 
-  #[export] Instance group_cancelR: forall z : G, RightCancellation (.*.) z.
+  #[export] Instance group_cancelR (z : G) : RightCancellation (.*.) z.
   Proof.
-    intros z x y E.
+    intros x y E.
     rewrite <-(right_identity x).
     rewrite <-(right_inverse (unit:=mon_unit) z).
     rewrite associativity.
